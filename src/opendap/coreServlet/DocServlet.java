@@ -141,7 +141,7 @@ public class DocServlet extends HttpServlet {
             String contextPath = ServletUtil.getContextPath(this);
             String servletName = "/" + this.getServletName();
 
-            LogUtil.logServerAccessStart(request, "HyraxAccess", "HTTP-GET", Integer.toString(reqNumber.incrementAndGet()));
+            LogUtil.hyraxAccessStart(request, Integer.toString(reqNumber.incrementAndGet()));
 
             if (!redirect(request, response)) {
 
@@ -259,7 +259,7 @@ public class DocServlet extends HttpServlet {
             }
         }
         finally {
-            LogUtil.logServerAccessEnd(request_status, "HyraxAccess");
+            LogUtil.hyraxAccessEnd(request_status);
         }
     }
 

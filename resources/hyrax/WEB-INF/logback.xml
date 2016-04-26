@@ -127,6 +127,7 @@
     <!-- Access/Performance Logging -->
     <logger name="HyraxAccess" level="all">
         <appender-ref ref="HyraxAccessLog"/>
+        <appender-ref ref="AnonymousAccessLog"/>
     </logger>
 
 

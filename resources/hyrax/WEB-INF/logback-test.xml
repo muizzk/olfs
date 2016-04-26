@@ -80,15 +80,32 @@
     <appender name="HyraxAccessLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>${logdir}/HyraxAccess.log</File>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>logFile.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>HyraxAccess.%d{yyyy-MM-dd}.log</FileNamePattern>
             <!-- keep 30 days worth of history -->
             <MaxHistory>30</MaxHistory>
         </rollingPolicy>
 
-        <layout class="ch.qos.logback.classic.PatternLayout">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>[%X{host}] [%X{UserAgent}] [%X{ident}] [%X{userid}] [%d{yyyy-MM-dd'T'HH:mm:ss.SSS Z}] [%8X{duration}] [%X{http_status}] [%8X{ID}] [%X{SOURCE}] [%X{resourceID}] [%X{query}] %n</pattern>
-        </layout>
+        </encoder>
+
     </appender>
+
+
+    <appender name="AnonymousAccessLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${logdir}/AnonymousAccess.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>AnonymousAccess.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <!-- keep 30 days worth of history -->
+            <MaxHistory>30</MaxHistory>
+        </rollingPolicy>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>[%X{UserAgent}] [%X{ident}] [%d{yyyy-MM-dd'T'HH:mm:ss.SSS Z}] [%8X{duration}] [%X{http_status}] [%8X{ID}] [%X{SOURCE}] [%X{resourceID}] [%X{query}] %n</pattern>
+        </encoder>
+
+    </appender>
+
 
 
     <appender name="BESCommands" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -231,8 +248,10 @@
 
 
 
+    <!-- Access/Performance Logging -->
     <logger name="HyraxAccess" level="all">
-        <appender-ref ref="HyraxAccessLog" />
+        <appender-ref ref="HyraxAccessLog"/>
+        <appender-ref ref="AnonymousAccessLog"/>
     </logger>
 
 

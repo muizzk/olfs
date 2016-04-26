@@ -174,7 +174,7 @@ public class DispatchServlet extends HttpServlet {
         RequestCache.openThreadCache();
 
         long reqno = reqNumber.incrementAndGet();
-        LogUtil.logServerAccessStart(req, "GATEWAY_SERVICE_ACCESS", "LastModified", Long.toString(reqno));
+        LogUtil.hyraxAccessStart(req, Long.toString(reqno));
         try {
 
             if (ReqInfo.isServiceOnlyRequest(req))
@@ -184,7 +184,7 @@ public class DispatchServlet extends HttpServlet {
 
         }
         finally {
-            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "GATEWAY_SERVICE_ACCESS");
+            LogUtil.hyraxAccessEnd(HttpServletResponse.SC_OK);
 
         }
 
@@ -211,7 +211,8 @@ public class DispatchServlet extends HttpServlet {
 
         try {
 
-            LogUtil.logServerAccessStart(request, "GATEWAY_SERVICE_ACCESS", "HTTP-GET", Integer.toString(reqNumber.incrementAndGet()));
+            long reqno = reqNumber.incrementAndGet();
+            LogUtil.hyraxAccessStart(request, Long.toString(reqno));
 
             if (!redirect(request, response)) {
 
@@ -232,7 +233,7 @@ public class DispatchServlet extends HttpServlet {
                 log.error("BAD THINGS HAPPENED!", t2);
             }
         } finally {
-            LogUtil.logServerAccessEnd(request_status, "GATEWAY_SERVICE_ACCESS");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
         }
     }

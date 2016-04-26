@@ -161,11 +161,11 @@ public class PDPService extends HttpServlet {
             RequestCache.openThreadCache();
 
             long reqno = _reqNumber.incrementAndGet();
-            LogUtil.logServerAccessStart(req, _accessLogName, "LastModified", Long.toString(reqno));
+            LogUtil.hyraxAccessStart(req, Long.toString(reqno));
             return -1;
 
         } finally {
-            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, _accessLogName);
+            LogUtil.hyraxAccessEnd(HttpServletResponse.SC_OK);
         }
 
 
@@ -204,7 +204,7 @@ public class PDPService extends HttpServlet {
         String msg = "";
         int status = HttpServletResponse.SC_FORBIDDEN;
 
-        LogUtil.logServerAccessStart(request,_accessLogName, request.getMethod(), Integer.toString(_reqNumber.incrementAndGet()));
+        LogUtil.hyraxAccessStart(request, Integer.toString(_reqNumber.incrementAndGet()));
         try {
             if (!redirect(request, response)) {
 
@@ -261,7 +261,7 @@ public class PDPService extends HttpServlet {
             }
         }
         finally {
-            LogUtil.logServerAccessEnd(status, _accessLogName);
+            LogUtil.hyraxAccessEnd(status);
             RequestCache.closeThreadCache();
         }
 

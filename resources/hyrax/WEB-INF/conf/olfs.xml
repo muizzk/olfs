@@ -68,6 +68,10 @@
         <login>loginPath?login_param=foo</login>
         <logout>logoutPath?logout_param=foo</logout>
     </AuthenticationControls -->
+    <HyraxMetrics>
+        <HyraxBaseUrl logReporting=”no”></HyraxBaseUrl>
+        <updateIntervalDays>5</updateIntervalDays>
+    </HyraxMetrics>
 
 
     <CatalogCache>

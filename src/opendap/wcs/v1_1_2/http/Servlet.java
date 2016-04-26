@@ -282,7 +282,7 @@ public class Servlet extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp) {
         int request_status = HttpServletResponse.SC_OK;
         try {
-            LogUtil.logServerAccessStart(req, "WCS_1.2_ACCESS", "HTTP-GET", Integer.toString(reqNumber.incrementAndGet()));
+            LogUtil.hyraxAccessStart(req, Integer.toString(reqNumber.incrementAndGet()));
             httpGetService.handleRequest(req, resp);
         }
         catch (Throwable t) {
@@ -303,13 +303,16 @@ public class Servlet extends HttpServlet {
             }
         }
         finally {
-            LogUtil.logServerAccessEnd(request_status, "WCS_1.2_ACCESS");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
         }
     }
 
 
     public void doPost(HttpServletRequest req, HttpServletResponse resp){
+
+        LogUtil.hyraxAccessStart(req, Integer.toString(reqNumber.incrementAndGet()));
+
         int request_status = HttpServletResponse.SC_OK;
         try {
 
@@ -347,7 +350,7 @@ public class Servlet extends HttpServlet {
             }
         }
         finally {
-            LogUtil.logServerAccessEnd(request_status, "WCS_1.2_ACCESS");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
 
         }
@@ -358,7 +361,7 @@ public class Servlet extends HttpServlet {
         RequestCache.openThreadCache();
 
         long reqno = reqNumber.incrementAndGet();
-        LogUtil.logServerAccessStart(req, "WCS_1.2_ACCESS", "LastModified", Long.toString(reqno));
+        LogUtil.hyraxAccessStart(req, Long.toString(reqno));
 
 
         try {
@@ -367,7 +370,7 @@ public class Servlet extends HttpServlet {
         } catch (Exception e) {
             return -1;
         } finally {
-            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "WCS_1.2_ACCESS");
+            LogUtil.hyraxAccessEnd(HttpServletResponse.SC_OK);
 
         }
 

@@ -423,7 +423,7 @@ public class ViewersServlet extends HttpServlet {
 
         RequestCache.openThreadCache();
 
-        LogUtil.logServerAccessStart(req, "WebStartServletAccess", "HTTP-GET", Integer.toString(reqNumber.incrementAndGet()));
+        LogUtil.hyraxAccessStart(req, Integer.toString(reqNumber.incrementAndGet()));
 
 
         _log.debug(ServletUtil.showRequest(req, reqNumber.get()));
@@ -553,7 +553,7 @@ public class ViewersServlet extends HttpServlet {
             }
         }
         finally {
-            LogUtil.logServerAccessEnd(request_status, "WebStartServletAccess");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
              this.destroy();
         }

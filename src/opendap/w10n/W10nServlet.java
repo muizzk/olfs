@@ -106,7 +106,7 @@ public class W10nServlet extends HttpServlet   {
         RequestCache.openThreadCache();
 
         long reqno = _reqNumber.incrementAndGet();
-        LogUtil.logServerAccessStart(req, "HyraxAccess", "LAST-MOD", Long.toString(reqno));
+        LogUtil.hyraxAccessStart(req, Long.toString(reqno));
 
         long lmt = -1;
 
@@ -123,7 +123,7 @@ public class W10nServlet extends HttpServlet   {
             _log.error("getLastModifiedTime() - Caught " + e.getClass().getName() + " msg: " + e.getMessage());
             lmt = -1;
         } finally {
-            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "HyraxAccess");
+            LogUtil.hyraxAccessEnd(HttpServletResponse.SC_OK);
             Timer.stop(timedProcedure);
 
         }
@@ -153,7 +153,7 @@ public class W10nServlet extends HttpServlet   {
 
 
                     int reqno = _reqNumber.incrementAndGet();
-                    LogUtil.logServerAccessStart(request, "HyraxAccess", "HTTP-GET", Long.toString(reqno));
+                    LogUtil.hyraxAccessStart(request, Long.toString(reqno));
 
                     _log.debug(Util.getMemoryReport());
 
@@ -211,7 +211,7 @@ public class W10nServlet extends HttpServlet   {
                 }
             }
             finally {
-                LogUtil.logServerAccessEnd(request_status, "HyraxAccess");
+                LogUtil.hyraxAccessEnd(request_status);
                 RequestCache.closeThreadCache();
             }
 

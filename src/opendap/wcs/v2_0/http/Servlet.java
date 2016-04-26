@@ -390,7 +390,7 @@ public class Servlet extends HttpServlet {
 
         int request_status = HttpServletResponse.SC_OK;
         try {
-            LogUtil.logServerAccessStart(req, "WCS_2.0_ACCESS", "HTTP-GET", Integer.toString(reqNumber.incrementAndGet()));
+            LogUtil.hyraxAccessStart(req, Integer.toString(reqNumber.incrementAndGet()));
             httpGetService.handleRequest(req, resp);
         }
         catch (Throwable t) {
@@ -411,7 +411,7 @@ public class Servlet extends HttpServlet {
             }
         }
         finally {
-            LogUtil.logServerAccessEnd(request_status, "WCS_2.0_ACCESS");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
 
         }
@@ -421,7 +421,7 @@ public class Servlet extends HttpServlet {
     public void doPost(HttpServletRequest req, HttpServletResponse resp){
         int request_status = HttpServletResponse.SC_OK;
         try {
-            LogUtil.logServerAccessStart(req, "WCS_2.0_ACCESS", "HTTP-POST", Integer.toString(reqNumber.incrementAndGet()));
+            LogUtil.hyraxAccessStart(req, Integer.toString(reqNumber.incrementAndGet()));
 
             if(wcsPostService.requestCanBeHandled(req)){
                 wcsPostService.handleRequest(req,resp);
@@ -457,7 +457,7 @@ public class Servlet extends HttpServlet {
             }
         }
         finally {
-            LogUtil.logServerAccessEnd(request_status, "WCS_2.0_ACCESS");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
 
         }
@@ -467,7 +467,7 @@ public class Servlet extends HttpServlet {
         RequestCache.openThreadCache();
 
         long reqno = reqNumber.incrementAndGet();
-        LogUtil.logServerAccessStart(req, "WCS_2.0_ACCESS", "LastModified", Long.toString(reqno));
+        LogUtil.hyraxAccessStart(req, Long.toString(reqno));
 
 
         try {
@@ -476,7 +476,7 @@ public class Servlet extends HttpServlet {
         } catch (Exception e) {
             return -1;
         } finally {
-            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "WCS_2.0_ACCESS");
+            LogUtil.hyraxAccessEnd(HttpServletResponse.SC_OK);
 
         }
 

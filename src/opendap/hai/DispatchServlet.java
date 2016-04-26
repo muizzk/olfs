@@ -193,9 +193,8 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
 
         RequestCache.openThreadCache();
 
-        long reqno = reqNumber.incrementAndGet();
-        LogUtil.logServerAccessStart(req, "ADMIN_SERVICE_ACCESS", "LastModified", Long.toString(reqno));
-
+        String reqno = Long.toString(reqNumber.incrementAndGet());
+        LogUtil.hyraxAccessStart(req,reqno);
         if (ReqInfo.isServiceOnlyRequest(req))
             return -1;
 
@@ -206,7 +205,7 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
         } catch (Exception e) {
             return -1;
         } finally {
-            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "ADMIN_SERVICE_ACCESS");
+            LogUtil.hyraxAccessEnd(HttpServletResponse.SC_OK);
 
         }
 
@@ -237,7 +236,8 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
 
         try {
 
-            LogUtil.logServerAccessStart(request, "ADMIN_SERVICE_ACCESS", "HTTP-GET", Integer.toString(reqNumber.incrementAndGet()));
+            String reqno = Long.toString(reqNumber.incrementAndGet());
+            LogUtil.hyraxAccessStart(request, reqno);
 
             if (!redirect(request, response)) {
 
@@ -277,7 +277,7 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
                 log.error("BAD THINGS HAPPENED!", t2);
             }
         } finally {
-            LogUtil.logServerAccessEnd(request_status, "ADMIN_SERVICE_ACCESS");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
         }
     }
@@ -289,7 +289,8 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
 
         try {
 
-            LogUtil.logServerAccessStart(request, "ADMIN_SERVICE_ACCESS", "HTTP-POST", Integer.toString(reqNumber.incrementAndGet()));
+            String reqno = Long.toString(reqNumber.incrementAndGet());
+            LogUtil.hyraxAccessStart(request, reqno);
 
             if (!redirect(request, response)) {
 
@@ -325,7 +326,7 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
                 log.error("BAD THINGS HAPPENED!", t2);
             }
         } finally {
-            LogUtil.logServerAccessEnd(request_status, "ADMIN_SERVICE_ACCESS");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
         }
     }

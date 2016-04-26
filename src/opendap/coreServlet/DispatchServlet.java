@@ -466,7 +466,7 @@ public class DispatchServlet extends HttpServlet {
 
 
                 int reqno = reqNumber.incrementAndGet();
-                LogUtil.logServerAccessStart(request, "HyraxAccess", "HTTP-GET", Long.toString(reqno));
+                LogUtil.hyraxAccessStart(request, Long.toString(reqno));
 
                 log.debug(Util.getMemoryReport());
 
@@ -522,7 +522,7 @@ public class DispatchServlet extends HttpServlet {
             }
         }
         finally {
-            LogUtil.logServerAccessEnd(request_status, "HyraxAccess");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
             log.info("doGet(): Response completed.\n");
         }
@@ -639,8 +639,7 @@ public class DispatchServlet extends HttpServlet {
                 RequestCache.openThreadCache();
 
                 int reqno = reqNumber.incrementAndGet();
-
-                LogUtil.logServerAccessStart(request, "HyraxAccess", "HTTP-POST", Long.toString(reqno));
+                LogUtil.hyraxAccessStart(request, Long.toString(reqno));
 
                 log.debug(ServletUtil.showRequest(request, reqno));
 
@@ -683,7 +682,7 @@ public class DispatchServlet extends HttpServlet {
             }
         }
         finally{
-            LogUtil.logServerAccessEnd(request_status, "HyraxAccess");
+            LogUtil.hyraxAccessEnd(request_status);
             RequestCache.closeThreadCache();
         }
 
@@ -728,7 +727,7 @@ public class DispatchServlet extends HttpServlet {
         RequestCache.openThreadCache();
 
         long reqno = reqNumber.incrementAndGet();
-        LogUtil.logServerAccessStart(req, "HyraxAccess", "LAST-MOD", Long.toString(reqno));
+        LogUtil.hyraxAccessStart(req, Long.toString(reqno));
 
         long lmt = -1;
 
@@ -751,9 +750,10 @@ public class DispatchServlet extends HttpServlet {
             }
         } catch (Exception e) {
             log.error("getLastModifiedTime() - Caught " + e.getClass().getName() + " msg: " + e.getMessage());
+
             lmt = -1;
         } finally {
-            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "HyraxAccess");
+            LogUtil.hyraxAccessEnd(HttpServletResponse.SC_OK);
             Timer.stop(timedProcedure);
 
         }
