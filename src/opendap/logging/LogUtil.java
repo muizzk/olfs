@@ -52,6 +52,10 @@ public class LogUtil {
     private static boolean isLogInit = false;
     //private static volatile long logID = 0;
 
+
+    private static String _hyraxAccessLog = "HyraxAccess";
+
+
     private static Logger log;
     static{
         System.out.print("+++LogUtil.static - Instantiating Logger ... ");
@@ -360,18 +364,24 @@ public class LogUtil {
         log.info("Logging started.");
     }
 
+    /**
+     * Collects information at the begining of a server access and caches it in a logging object that
+     * keeps separate collections for each thread (and therefore each request).
+     * @param req
+     * @param reqId
+     */
     public static void hyraxAccessStart(HttpServletRequest req, String reqId){
-        LogUtil.logServerAccessStart(req, reqId);
+        logServerAccessStart(req, reqId);
     }
 
 
-    private static String _hyraxAccessLog = "HyraxAccess";
 
     public static void hyraxAccessEnd(int status){
 
-        LogUtil.logServerAccessEnd(status);
+        logServerAccessEnd(status);
 
-        // THIS IS THE SPOT WHERE THE ACCESS LOG ENTRIES ARE WRITTEN!!
+        //############################################################################################
+        // THIS IS THE SPOT WHERE THE ACCESS LOG ENTRY IS WRITTEN!!
         // Doesn't matter what we write to the access_log because the access log formatter ignores
         // it in lieu of the stuff in MDC. All that matters is that we write something.
         Logger hyrax_access_log = org.slf4j.LoggerFactory.getLogger(_hyraxAccessLog);
