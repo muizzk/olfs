@@ -30,6 +30,7 @@ package opendap.coreServlet;
 import opendap.bes.BESManager;
 import opendap.http.AuthenticationControls;
 import opendap.logging.LogUtil;
+import opendap.logging.ReporterConfig;
 import opendap.logging.Timer;
 import opendap.logging.Procedure;
 import org.jdom.Document;
@@ -73,7 +74,6 @@ import java.util.regex.Pattern;
  * <p/>
  */
 public class DispatchServlet extends HttpServlet {
-
 
     /**
      * ************************************************************************
@@ -131,10 +131,10 @@ public class DispatchServlet extends HttpServlet {
 
 
 
-        httpGetDispatchHandlers = new Vector<DispatchHandler>();
-        Vector<Element> httpGetHandlerConfigs = new Vector<Element>();
-        httpPostDispatchHandlers = new Vector<DispatchHandler>();
-        Vector<Element> httpPostHandlerConfig = new Vector<Element>();
+        httpGetDispatchHandlers = new Vector<>();
+        Vector<Element> httpGetHandlerConfigs = new Vector<>();
+        httpPostDispatchHandlers = new Vector<>();
+        Vector<Element> httpPostHandlerConfig = new Vector<>();
 
 
         // init logging
@@ -143,8 +143,10 @@ public class DispatchServlet extends HttpServlet {
 
         PersistentConfigurationHandler.installDefaultConfiguration(this);
 
-
         loadConfig();
+
+        //ReporterConfig.processConfig(configDoc.getRootElement().getChild("HyraxMetrics"));
+        log.info("init(): ReporterConfig.status(): {}",ReporterConfig.status());
 
 
         Element timer = configDoc.getRootElement().getChild("Timer");
@@ -222,7 +224,6 @@ public class DispatchServlet extends HttpServlet {
         filename = Scrub.fileName(ServletUtil.getConfigPath(this) + filename);
 
         log.debug("Loading Configuration File: " + filename);
-
 
         try {
 
@@ -456,6 +457,9 @@ public class DispatchServlet extends HttpServlet {
 
             RequestCache.openThreadCache();
 
+            if(redirectToConfigureMePage(request,response))
+                return;
+
             try {
 
                 if(LicenseManager.isExpired(request)){
@@ -619,7 +623,23 @@ public class DispatchServlet extends HttpServlet {
         }
         return false;
     }
-    
+
+    private boolean redirectToConfigureMePage(HttpServletRequest req,
+                                                  HttpServletResponse res)
+            throws IOException {
+
+
+        if(!ReporterConfig.isConfigured()){
+            String redirectPath = getServletContext().getContextPath();
+            redirectPath += "/jsp/YOU_MUST_CONFIGURE_ME.jsp";
+            res.sendRedirect(redirectPath);
+            return true;
+        }
+
+        return false;
+
+    }
+
 
     /**
      * @param request  .
