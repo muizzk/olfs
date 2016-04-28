@@ -143,3 +143,10 @@ HR {
     font-style: italic;
 }
 
+.para {
+    font-family:Tahoma,Arial,sans-serif;
+    background:white;
+    color:black;
+    font-size:12px;
+}
+
