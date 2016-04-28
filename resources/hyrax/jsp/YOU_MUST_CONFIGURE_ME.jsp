@@ -56,7 +56,10 @@
     <li><p>Are the servers seeing lots of small requests?</p></li>
     <li><p>Large requests?</p></li>
     <li><p>What output formats are most popular?</p></li>
-    <li><p>Clients - who are they? Can specific ones be improved to better utilize the service?</p></li>
+    <li><p>Which software clients are used to access tye service?</p></li>
+    <li><p>Can the server be modified to be better support the ways in
+        which popular clients utilize the service?</p></li>
+    <li><p>Can some clients be improved to better utilize the service?</p></li>
     <li><p>Do clients check constrained metadata responses?</p></li>
 </ul>
 
@@ -195,21 +198,6 @@ The Hyrax Metrics log reporting system shares only the following information for
 <p>To Contact Us:</p>
 
 <p> Technical Support: <a href="mailto:support@opendap.org">support@opendap.org</a></p>
-
-<p>&nbsp;</p>
-
-<p>Hyrax Java Development: </p>
-<blockquote>
-    <p><strong>OLFS</strong>: ndp &lt;AT&gt; opendap &lt;DOT&gt; org </p>
-</blockquote>
-<p>Hyrax C++ Development: </p>
-<blockquote>
-    <p><strong>BES</strong>: jgallagher &lt;AT&gt; opendap &lt;DOT&gt; edu </p>
-
-    <p><strong>Libdap</strong>: jgallagher &lt;AT&gt; opendap &lt;DOT&gt; org </p>
-</blockquote>
-<p>&nbsp;</p>
-<br/>
 
 <h1>Sponsorship</h1>
 
