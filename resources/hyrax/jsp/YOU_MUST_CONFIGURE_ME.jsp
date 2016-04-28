@@ -45,8 +45,21 @@
 <p>If you're reading this chances are you have just fired up your brand new Hyrax server.</p>
 <p>You'll need to take a moment to finish the basic configuration of the server before we can get to the data.</p>
 <h2>Explanation</h2>
-<p>OMG DO SOMETHING! EXPLAIN IT!</p>
-<p>In order to better direct our efforts in improving Hyrax and it's overall performance it's importnt for us to </p>
+<p><b>OMG! DO SOMETHING! EXPLAIN IT!</b></p>
+<p>
+    In order to better direct our efforts when improving Hyrax and it's overall performance it's important for us to
+    have a clear picture about the manner ways in which the servers are being used.</p>
+<p> Some of the questions we would like to answer are:</p>
+<ul>
+    <li><p>Are the servers seeing lots of small requests?</p></li>
+    <li><p>Large requests?</p></li>
+    <li><p>What output formats are most popular?</p></li>
+    <li><p>Clients - who are they? Can specific ones be improved to better utilize the service?</p></li>
+    <li><p>Do clients check constrained metadata responses?</p></li>
+</ul>
+
+<p>If you would like to help improve Hyrax please consider fully enabling the HyraxMetrics!</p>
+
 <h2>Configuration Instructions</h2>
 <p>
 If you do nothing this page will never go away. :)
@@ -111,7 +124,43 @@ If you do nothing this page will never go away. :)
 </ul>
 </p>
 
-<h3>Thanks for using our software!</h3>
+<h2>Privacy</h2>
+<div class="small">
+The Hyrax Metrics log reporting system shares only the following information for each request received by Hyrax:
+    <dl>
+        <dt><span class="small_bold">User-Agent</span></dt>
+        <dd>The value of the HTTP User-Agent header from the client request.</dd>
+
+        <dt><span class="small_bold">Session ID</span></dt>
+        <dd>The session ID in use by the client. This allows the metrics to view
+            A particular client's patterns of request behavior.</dd>
+
+        <dt><span class="small_bold">Request Time</span></dt>
+        <dd>Time request was received</dd>
+
+        <dt><span class="small_bold">Duration</span></dt>
+        <dd>Time request took to complete</dd>
+
+        <dt><span class="small_bold">HTTP Status</span></dt>
+        <dd>The HTTP return status of the request.</dd>
+
+        <dt><span class="small_bold">Request Number</span></dt>
+        <dd>The request number from a hit counter in Hyrax.</dd>
+
+        <dt><span class="small_bold">HTTP Verb</span></dt>
+        <dd>THe HTTP Command: GET | POST | HEAD </dd>
+
+        <dt><span class="small_bold">Resource ID</span></dt>
+        <dd>The path part of the URL that defines the resource being accessed.</dd>
+
+        <dt><span class="small_bold">Query String</span></dt>
+        <dd>Everything after the question mark in the request URL.</dd>
+
+    </dl>
+</div>
+
+
+<h2>Thanks for using our software!</h2>
 
 <p>We hope we hope you find this software useful, and we welcome
     your questions and comments. </p>
