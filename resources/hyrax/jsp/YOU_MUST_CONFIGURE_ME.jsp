@@ -81,7 +81,26 @@
 &lt;/HyraxMetrics&gt;
             </pre>
             By configuring this element you will stop this from being the "one" page.<br/>
-            The next three sections detail your configuration choices. <br/><br/>
+            If for some reason the <tt>olfs.xml</tt> does not contain the <tt>HyraxMetrics</tt> element then try
+            getting the OLFS to perform a fresh install:<br/>
+            <ol>
+                <li>Locate your and backup your current configuration directory.
+                    <blockquote><tt>tar -cvzf olfs_config.tgz /etc/olfs</tt></blockquote>
+                </li>
+                <li>Remove the current configuration directory.
+                    <blockquote><tt>sudo rm -r /etc/olfs</tt></blockquote>
+                </li>
+                <li>Recreate the configuration directory.
+                    <blockquote>
+                        <tt>sudo mkdir /etc/olfs</tt><br/>
+                        <tt>chown yer_user /etc/olfs</tt>
+                    </blockquote>
+                </li>
+                <li>Restart Tomcat.</li>
+                <li>Start back at the top of this section.</li>
+            </ol>
+            <br/>
+            The next three sections detail your configuration options. <br/><br/>
         </li>
 
         <li><span style="font-weight: bold">Metrics Disabled</span>
@@ -90,7 +109,7 @@
                 valid URL) will disable all Hyrax metrics collection.
             <div class="small">
             <pre>
-&lt;!-- Hyrax Metrics Disabled --&gt;
+&lt;!-- Hyrax Metrics: Disabled --&gt;
 &lt;HyraxMetrics&gt;
     <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&#8221;no&#8221;&gt;no&lt;/HyraxBaseUrl&gt;</span>
     &lt;updateIntervalDays&gt;5&lt;/updateIntervalDays&gt;
@@ -100,15 +119,15 @@
 
             </div>
         </li>
-        <li><span style="font-weight: bold">Metrics Ping Only</span>
+        <li><span style="font-weight: bold">Metrics "Ping" Only</span>
             <div>
                 Setting the value of <tt>HyraxBaseUrl</tt> to the publicly accessible domain name or IP
                 address of your server instructs your server to register with OPeNDAP and will enable OPeNDAP
-                Inc. servers check the publicly available Hyrax interface to see that the Hyrax instance is running.
+                Inc. servers to find your server's publicly available Hyrax interface to see that the Hyrax instance is running.
                 This will help us to get a rough estimate of the numbers of active instances of Hyrax operating in the field.
                 <div class="small">
         <pre>
-&lt;!-- Hyrax Metrics Ping Only --&gt;
+&lt;!-- Hyrax Metrics: "Ping" Only --&gt;
 &lt;HyraxMetrics&gt;
     <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&#8221;no&#8221;&gt;http://yourserver.org/opendap/&lt;/HyraxBaseUrl&gt;</span>
     &lt;updateIntervalDays&gt;5&lt;/updateIntervalDays&gt;
@@ -120,15 +139,16 @@
         <li><span style="font-weight: bold">Best Metrics Collection</span>
             <div>
                 If you wish for your server to participate in the OPeNDAP Inc.'s access pattern analysis project then
-                simply change the value of the <tt>logReporting</tt> attribute of the <code>HyraxBaseUrl</code> element
+                simply do everything for the "Ping Only" option above, plus change the value of the
+                <tt>logReporting</tt> attribute of the <code>HyraxBaseUrl</code> element
                 so that it's value is "true" or "yes". If this is set and value of the <code>HyraxBaseUrl</code> element
                 is your server's publicly accessible domain name or IP then the OPeNDAP metrics collection client will
                 collect metrics data from the server at the interval defined in the <code>updateIntervalDays</code> element.
                 <div class="small">
         <pre>
-&lt;!-- Hyrax Metrics Best Metrics Collection --&gt;
+&lt;!-- Hyrax Metrics: Best Metrics Collection --&gt;
 &lt;HyraxMetrics&gt;
-    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&#8221;yes&#8221;&gt;http://test.opendap.org/opendap&lt;/HyraxBaseUrl&gt;
+    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&#8221;yes&#8221;&gt;http://yourserver.org/opendap/&lt;/HyraxBaseUrl&gt;
     &lt;updateIntervalDays&gt;5&lt;/updateIntervalDays&gt;</span>
 &lt;/HyraxMetrics&gt;
         </pre>
@@ -151,7 +171,7 @@ The Hyrax Metrics log reporting system shares only the following information for
         <dt><span class="small_bold">User-Agent</span></dt>
         <dd>
             The value of the HTTP "User-Agent" header from the client request. This will help us to associate request
-            patterns with the software that issued them.
+            patterns with the software program that issued them.
         </dd>
 
         <dt><span class="small_bold">Session ID</span></dt>
