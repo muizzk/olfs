@@ -139,7 +139,7 @@ public class ReporterConfig implements ServletContextListener {
 
     /**
      *
-     * @return Returns true is the configuration has indicated that the retrieval of anonymous log information by the
+     * @return Returns true if the configuration has indicated that the retrieval of anonymous log information by the
      * authorized server will be allowed. If <tt>isReporting()</tt> returns false then no log reporting should be
      * allowed.
      */
