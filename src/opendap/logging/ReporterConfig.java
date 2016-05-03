@@ -93,7 +93,7 @@ public class ReporterConfig implements ServletContextListener {
 
         sb.append("[getHyraxBaseUrl()=").append(getHyraxBaseUrl()==null?null:getHyraxBaseUrl().toString()).append("]");
         sb.append("[isConfigured()=").append(isConfigured()).append("]");
-        sb.append("[isEnabled()=").append(isEnabled()).append("]");
+        sb.append("[isReportingEnabled()=").append(isReportingEnabled()).append("]");
         sb.append("[isLogReportingEnabled()=").append(isLogReportingEnabled()).append("]");
         sb.append("[getUpdateIntervalDays()=").append(getUpdateIntervalDays()).append("]");
         return sb.toString();
@@ -120,25 +120,49 @@ public class ReporterConfig implements ServletContextListener {
         }
     }
 
+    /**
+     * @return True if a configuration has been processed
+     */
     public static boolean isConfigured(){
         return _configured.get();
     }
 
 
-    public static boolean isEnabled(){
+    /**
+     * @return True if basic reporting is enabled. This means that when the server starts up it will register with the
+     * OPeNDAP metrics collection service and that the metrics collection service will come looking to see if the
+     * server is up.
+     */
+    public static boolean isReportingEnabled(){
         return _enabled.get();
     }
 
+    /**
+     *
+     * @return Returns true is the configuration has indicated that the retrieval of anonymous log information by the
+     * authorized server will be allowed. If <tt>isReporting()</tt> returns false then no log reporting should be
+     * allowed.
+     */
     public static boolean isLogReportingEnabled(){
         return _logReportingEnabled.get();
     }
 
+    /**
+     *
+     * @return The interval (in days) at which the metrics collection service should ping and (if enabled) collect the
+     * logs.
+     */
     public static long getUpdateIntervalDays(){
         return _updateIntervalDays.get();
     }
 
 
-
+    /**
+     * This is a run once method that will process the passed <tt>HyraxMetrics</tt> configuration element and configure
+     * the state of the permissible Hyrax Metrics collection for a particular instance of the OLFS.
+     *
+     * @param config The <tt>HyraxMetrics</tt> configuration element (usually found in the olfs.xml file)
+     */
     public static void processConfig(Element config)  {
         Logger log = LoggerFactory.getLogger(ReporterConfig.class);
 
