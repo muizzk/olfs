@@ -470,7 +470,7 @@ public class W10nResponder {
         ServletOutputStream sos =  response.getOutputStream();
 
         if(w10nRequest.callback()!=null){
-            sos.print(Scrub.simpleString(w10nRequest.callback())+"(");
+            sos.print(w10nRequest.callback()+"(");
         }
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -527,7 +527,7 @@ public class W10nResponder {
                 name = name.substring(1);
         }
 
-        long   size = Integer.parseInt(dataset.getAttributeValue("size"));
+        long   size = Long.parseLong(dataset.getAttributeValue("size"));
         String  lmt = dataset.getAttributeValue("lastModified");
 
 
@@ -768,6 +768,7 @@ public class W10nResponder {
         _log.debug("sendNetCDF_3() - Sending NetCDF-3 for dataset: {}",w10nRequest.getValidResourcePath());
 
 
+
         String xdap_accept = "3.2";
 
         String resourceID = w10nRequest.getRequestedResourceId();
@@ -799,6 +800,7 @@ public class W10nResponder {
         _besApi.writeDap2DataAsNetcdf3(
                 w10nRequest.getValidResourcePath(),
                 w10nRequest.getDap2CE(),
+                w10nRequest.getXmlBase(),
                 xdap_accept,
                 maxResponseSize,
                 os);
@@ -872,6 +874,7 @@ public class W10nResponder {
         _besApi.writeDap2DataAsNetcdf4(
                 w10nRequest.getValidResourcePath(),
                 w10nRequest.getDap2CE(),
+                w10nRequest.getXmlBase(),
                 xdap_accept,
                 maxResponseSize,
                 os);

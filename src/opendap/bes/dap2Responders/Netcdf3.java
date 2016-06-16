@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.regex.Pattern;
 
 /**
@@ -54,19 +55,16 @@ public class Netcdf3 extends Dap4Responder {
     private static String defaultRequestSuffix = ".nc";
 
 
-
-    public Netcdf3(String sysPath, BesApi besApi) {
-        this(sysPath, null, defaultRequestSuffix, besApi);
+    public Netcdf3(String sysPath, BesApi besApi, boolean addTypeSuffixToDownloadFilename) {
+        this(sysPath, null, defaultRequestSuffix, besApi, addTypeSuffixToDownloadFilename);
     }
 
-    public Netcdf3(String sysPath, String pathPrefix, BesApi besApi) {
-        this(sysPath, pathPrefix, defaultRequestSuffix, besApi);
-    }
 
-    public Netcdf3(String sysPath, String pathPrefix, String requestSuffixRegex, BesApi besApi) {
+    public Netcdf3(String sysPath, String pathPrefix, String requestSuffixRegex, BesApi besApi, boolean addTypeSuffixToDownloadFilename) {
         super(sysPath, pathPrefix, requestSuffixRegex, besApi);
         log = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
+        addTypeSuffixToDownloadFilename(addTypeSuffixToDownloadFilename);
         setServiceRoleId("http://services.opendap.org/dap4/data/netcdf-3");
         setServiceTitle("NetCDF-3 Data Response");
         setServiceDescription("NetCDF-3 representation of the DAP2 Data Response object.");
@@ -84,6 +82,23 @@ public class Netcdf3 extends Dap4Responder {
     public boolean isMetadataResponder(){ return false; }
 
 
+    /**
+     * For netCDF3, examine the name and prefix it with 'nc_' if the 
+     * name would otherwise not be an acceptable filename (in 
+     * practice this means 'if the name starts with a number').
+     * 
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDownloadFileName(String resourceID){
+
+        String downloadFileName = super.getDownloadFileName(resourceID);
+        Pattern startsWithNumber = Pattern.compile("[0-9].*");
+        if(startsWithNumber.matcher(downloadFileName).matches())
+            downloadFileName = "nc_"+downloadFileName;
+
+        return downloadFileName;
+    }
 
 
 
@@ -94,10 +109,13 @@ public class Netcdf3 extends Dap4Responder {
 
         String resourceID = getResourceId(requestedResourceId, false);
 
+        String cf_history_entry = getCFHistoryEntry(request);
+
+        log.debug("sendNormativeRepresentation(): cf_history_entry: '{}'",cf_history_entry);
 
         BesApi besApi = getBesApi();
 
-        log.debug("Sending {} for dataset: {}",getServiceTitle(),resourceID);
+        log.debug("sendNormativeRepresentation(): Sending  {} for dataset: {}",getServiceTitle(),resourceID);
 
         MediaType responseMediaType =  getNormativeMediaType();
 
@@ -123,11 +141,11 @@ public class Netcdf3 extends Dap4Responder {
         OutputStream os = response.getOutputStream();
 
 
-        besApi.writeDap2DataAsNetcdf3(resourceID, constraintExpression, xdap_accept, user.getMaxResponseSize(), os);
+        besApi.writeDap2DataAsNetcdf3(resourceID, constraintExpression, cf_history_entry, xdap_accept, user.getMaxResponseSize(), os);
 
 
         os.flush();
-        log.debug("Sent {}",getServiceTitle());
+        log.debug("sendNormativeRepresentation(): Sent {}",getServiceTitle());
 
 
 

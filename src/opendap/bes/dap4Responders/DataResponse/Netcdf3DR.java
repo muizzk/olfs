@@ -59,18 +59,19 @@ public class Netcdf3DR extends Dap4Responder{
 
 
 
-    public Netcdf3DR(String sysPath, BesApi besApi) {
-        this(sysPath, null, defaultRequestSuffix, besApi);
+    public Netcdf3DR(String sysPath, BesApi besApi, boolean addTypeSuffixToDownloadFilename) {
+        this(sysPath, null, defaultRequestSuffix, besApi,addTypeSuffixToDownloadFilename);
     }
 
-    public Netcdf3DR(String sysPath, String pathPrefix, BesApi besApi) {
-        this(sysPath, pathPrefix, defaultRequestSuffix, besApi);
+    public Netcdf3DR(String sysPath, String pathPrefix, BesApi besApi, boolean addTypeSuffixToDownloadFilename) {
+        this(sysPath, pathPrefix, defaultRequestSuffix, besApi,addTypeSuffixToDownloadFilename);
     }
 
-    public Netcdf3DR(String sysPath, String pathPrefix, String requestSuffixRegex, BesApi besApi) {
+    public Netcdf3DR(String sysPath, String pathPrefix, String requestSuffixRegex, BesApi besApi, boolean addTypeSuffixToDownloadFilename) {
         super(sysPath, pathPrefix, requestSuffixRegex, besApi);
         log = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
+        addTypeSuffixToDownloadFilename(addTypeSuffixToDownloadFilename);
         setServiceRoleId("http://services.opendap.org/dap4/data/netcdf-3");
         setServiceTitle("NetCDF-3 Data Response");
         setServiceDescription("NetCDF-3 representation of the DAP4 Data Response object.");
@@ -89,6 +90,17 @@ public class Netcdf3DR extends Dap4Responder{
 
 
 
+    @Override
+    public String getDownloadFileName(String resourceID){
+
+        String downloadFileName = super.getDownloadFileName(resourceID);
+        Pattern startsWithNumber = Pattern.compile("[0-9].*");
+        if(startsWithNumber.matcher(downloadFileName).matches())
+            downloadFileName = "nc_"+downloadFileName;
+
+        return downloadFileName;
+    }
+
 
 
     public void sendNormativeRepresentation(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -98,6 +110,7 @@ public class Netcdf3DR extends Dap4Responder{
         QueryParameters qp = new QueryParameters(request);
 
         String resourceID = getResourceId(requestedResourceId, false);
+        String cf_history_entry = getCFHistoryEntry(request);
 
 
         BesApi besApi = getBesApi();
@@ -126,7 +139,6 @@ public class Netcdf3DR extends Dap4Responder{
         log.debug("respondToHttpGetRequest(): NetCDF file downloadFileName: " + downloadFileName );
 
         String contentDisposition = " attachment; filename=\"" +downloadFileName+"\"";
-
         response.setHeader("Content-Disposition", contentDisposition);
 
 
@@ -138,7 +150,7 @@ public class Netcdf3DR extends Dap4Responder{
 
 
 
-        besApi.writeDap4DataAsNetcdf3(resourceID, qp, user.getMaxResponseSize(), os);
+        besApi.writeDap4DataAsNetcdf3(resourceID, qp, cf_history_entry, user.getMaxResponseSize(), os);
 
 
         os.flush();

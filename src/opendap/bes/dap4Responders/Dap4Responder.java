@@ -26,7 +26,7 @@
 
 package opendap.bes.dap4Responders;
 
-import opendap.bes.BesDapResponder;
+import opendap.bes.*;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.coreServlet.ReqInfo;
 import opendap.coreServlet.ResourceInfo;
@@ -40,6 +40,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -58,15 +60,25 @@ public abstract class Dap4Responder extends BesDapResponder  {
     private MediaType _normativeMediaType;
     private Vector<Dap4Responder> _altResponders;
     private String _combinedRequestSuffixRegex;
+    private boolean _addTypeSuffixToDownloadFilename;
 
 
 
     public Dap4Responder(String sysPath, String pathPrefix, String requestSuffix, BesApi besApi) {
         super(sysPath, pathPrefix, requestSuffix, besApi);
         _log = LoggerFactory.getLogger(getClass().getName());
-        _altResponders =  new Vector<Dap4Responder>();
+        _altResponders =  new Vector<>();
+        addTypeSuffixToDownloadFilename(false);
     }
 
+    public void addTypeSuffixToDownloadFilename(boolean value){
+        _addTypeSuffixToDownloadFilename = value;
+    }
+
+
+    public boolean addTypeSuffixToDownloadFilename(){
+        return _addTypeSuffixToDownloadFilename;
+    }
 
 
     public void setNormativeMediaType(MediaType mt){
@@ -375,9 +387,8 @@ public abstract class Dap4Responder extends BesDapResponder  {
 
     */
 
-    @Override
-    public String getXmlBase(HttpServletRequest req){
 
+    public String getRequestUrlPath(HttpServletRequest req) {
         String forwardRequestUri = (String)req.getAttribute("javax.servlet.forward.request_uri");
         String requestUrl = req.getRequestURL().toString();
 
@@ -389,13 +400,17 @@ public abstract class Dap4Responder extends BesDapResponder  {
             requestUrl = scheme + "://" + server + ":" + port + forwardRequestUri;
         }
 
+        return requestUrl;
+    }
 
 
+
+    @Override
+    public String getXmlBase(HttpServletRequest req){
+
+        String requestUrl = getRequestUrlPath(req);
         String xmlBase = Util.dropSuffixFrom(requestUrl, Pattern.compile(getCombinedRequestSuffixRegex()));
-
-
-
-        _log.debug("@xml:base='{}'", xmlBase);
+        _log.debug("getXmlBase(): @xml:base='{}'", xmlBase);
         return xmlBase;
     }
 
@@ -412,6 +427,33 @@ public abstract class Dap4Responder extends BesDapResponder  {
         ResourceInfo ri = getResourceInfo(dataSource);
         return ri.lastModified();
 
+    }
+
+
+    private static final String CF_History_Entry_Date_Format = "yyyy-MM-dd HH:mm:ss z";
+
+    public String getCFHistoryEntry(HttpServletRequest request) throws IOException {
+
+        StringBuilder cf_history_entry = new StringBuilder();
+
+        // Add the date
+        Date now = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat(CF_History_Entry_Date_Format);
+        sdf.setTimeZone(new SimpleTimeZone(0,"GMT"));
+        cf_history_entry.append(sdf.format(now,new StringBuffer(),new FieldPosition(0)));
+
+
+        // Add the Hyrax Version
+        cf_history_entry.append(" Hyrax-").append(opendap.bes.Version.getHyraxVersionString());
+        cf_history_entry.append(" ");
+
+        // Add the complete request URL
+        cf_history_entry.append(getRequestUrlPath(request));
+        cf_history_entry.append("?");
+        cf_history_entry.append(ReqInfo.getConstraintExpression(request));
+        cf_history_entry.append("\n");
+
+        return cf_history_entry.toString();
     }
 
 
@@ -499,6 +541,40 @@ public abstract class Dap4Responder extends BesDapResponder  {
                 description.setText(descriptionText);
         }
         return description;
+    }
+
+
+    /**
+     * If addTypeSuffixToDownloadFilename() is true, append the value of
+     * getRequestSuffix() to the name.
+     * 
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDownloadFileName(String resourceID){
+        String name = super.getDownloadFileName(resourceID);
+
+        // old rule: add the suffix - there was no option
+        // old-new rule: if addTypeSuffixToDownloadFilename() is true, append getRequestSuffix().
+        // new rule: if addType...() is true, then look at 'name' and do one of the following:
+        //              file.<ext>: remove '.<ext>' and append the value of getRequestSuffix()
+        //              file [no ext at all]: append getRequestSuffix()
+        //           else if addType...() is not true, provide the old behavior 
+        // Assume that all <ext> are no more than three characters long (some are, but this is
+        // a reasonable compromise).
+        
+        if(addTypeSuffixToDownloadFilename()) {
+        	int dotPos = name.lastIndexOf('.');	// -1 if '.' not found
+        	int extLength = name.length() - (dotPos + 1);
+
+        	if (dotPos != -1 && (extLength > 0 && extLength < 4)) {
+        		name = name.substring(0, dotPos);
+        	}
+        }
+        	
+        name += getRequestSuffix();
+
+        return name;
     }
 
 
