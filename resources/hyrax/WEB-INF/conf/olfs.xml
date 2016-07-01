@@ -55,7 +55,6 @@
             -->
             <maxResponseSize>0</maxResponseSize>
 
-
             <!-- The ClientPool maximum number of concurrent
               -  BES client connections allowed.
               -->
@@ -68,11 +67,21 @@
         <login>loginPath?login_param=foo</login>
         <logout>logoutPath?logout_param=foo</logout>
     </AuthenticationControls -->
+
     <HyraxMetrics>
         <HyraxBaseUrl logReporting="no"></HyraxBaseUrl>
         <updateIntervalDays>5</updateIntervalDays>
     </HyraxMetrics>
 
+    <!-- The LogReporter configuration provides configuration
+         information to the log reportig feature configured above
+	 in the HyraxMetrics element. If the metric reporting
+	 feature is turned off, these options have no effect. -->
+
+    <LogReporter>
+        <HyraxLogfilePath>Path to the AnonymousAccess.log</HyraxLogfilePath>
+	<DefaultPing>3600</DefaultPing>
+    </LogReporter>
 
     <CatalogCache>
         <maxEntries>10000</maxEntries>
@@ -103,7 +112,6 @@
 
             <!-- </Handler>  -->
                      
-                     
             <Handler className="opendap.ncml.NcmlDatasetDispatcher" />            
    
             <Handler className="opendap.threddsHandler.StaticCatalogDispatch">
@@ -114,8 +122,6 @@
             <Handler className="opendap.gateway.DispatchHandler">
                 <prefix>gateway</prefix>
             </Handler>
-
-
 
             <Handler className="opendap.bes.BesDapDispatcher" >
 
@@ -202,7 +208,6 @@
       WARNING: There is some performance cost to utilizing the Timer.
     -->
     <!-- Timer enabled="false" / -->
-
 
 </OLFSConfig>
 
