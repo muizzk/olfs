@@ -712,13 +712,23 @@ public class BesApi {
      * @throws PPTException              .
      */
     public void writePathInfoResponse(String dataSource,
-                                         OutputStream os)
+                                      OutputStream os)
             throws BadConfigurationException, BESError, IOException, PPTException {
 
         besTransaction(
-            dataSource,
-            getShowPathInfoRequestDocument(dataSource),
-            os);
+                dataSource,
+                getShowPathInfoRequestDocument(dataSource),
+                os);
+    }
+
+    public void writeW10nPathInfoResponse(String dataSource,
+                                      OutputStream os)
+            throws BadConfigurationException, BESError, IOException, PPTException {
+
+        besTransaction(
+                dataSource,
+                getShowW10nPathInfoRequestDocument(dataSource),
+                os);
     }
 
     public void getPathInfoDocument(String dataSource, Document response)
@@ -732,6 +742,29 @@ public class BesApi {
 
 
         writePathInfoResponse(dataSource,pathInfoDocString);
+
+
+        SAXBuilder sb = new SAXBuilder();
+
+        Document pathInfoResponseDoc = sb.build(new ByteArrayInputStream(pathInfoDocString.toByteArray()));
+
+        response.detachRootElement();
+
+        response.setRootElement(pathInfoResponseDoc.detachRootElement());
+
+    }
+
+    public void getW10nPathInfoDocument(String dataSource, Document response)
+            throws PPTException,
+            BadConfigurationException,
+            IOException,
+            JDOMException, BESError {
+
+
+        ByteArrayOutputStream pathInfoDocString = new ByteArrayOutputStream();
+
+
+        writeW10nPathInfoResponse(dataSource,pathInfoDocString);
 
 
         SAXBuilder sb = new SAXBuilder();
@@ -2367,6 +2400,36 @@ public class BesApi {
     public Element showPathInfoRequestElement(String resource) {
         Element e;
         Element spi = new Element("showPathInfo",BES_NS);
+
+        spi.setAttribute("node", resource);
+
+        return spi;
+    }
+
+    public  Document getShowW10nPathInfoRequestDocument(String dataSource)
+            throws BadConfigurationException {
+
+        String besDataSource = getBES(dataSource).trimPrefix(dataSource);
+
+        Element request = new Element("request", BES_NS);
+        request.setAttribute(REQUEST_ID,getRequestIdBase());
+
+        request.addContent(setContextElement(EXPLICIT_CONTAINERS_CONTEXT,"no"));
+        request.addContent(setContextElement(ERRORS_CONTEXT,XML_ERRORS));
+        //request.addContent(w10nRequestElement(besDataSource,queryString,mediaType,maxResponseSize));
+
+        request.addContent(showW10nPathInfoRequestElement(besDataSource));
+
+        XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
+        log.debug("getShowPathInfoRequestDocument() - Document\n {}",xmlo.outputString(request));
+
+        return new Document(request);
+
+    }
+
+    public Element showW10nPathInfoRequestElement(String resource) {
+        Element e;
+        Element spi = new Element("showW10nPathInfo",BES_NS);
 
         spi.setAttribute("node", resource);
 
