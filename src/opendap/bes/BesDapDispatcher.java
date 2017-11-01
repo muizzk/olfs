@@ -44,7 +44,10 @@ import opendap.dap.Dap2Service;
 import opendap.dap4.Dap4Service;
 import opendap.services.FileService;
 import opendap.services.ServicesRegistry;
+import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -355,6 +358,14 @@ public class BesDapDispatcher implements DispatchHandler {
 
         String relativeUrl = ReqInfo.getLocalUrl(request);
         // String dataSource = getBesApi().getBesDataSourceID(relativeUrl, false);
+
+        Document doc = new Document();
+
+        getBesApi().getPathInfoDocument(relativeUrl, doc);
+
+        XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
+        _log.debug("PathInfoDocument: \n{}",xmlo.outputString(doc));
+
 
         _log.debug("The client requested this resource: {}", relativeUrl);
         if(relativeUrl.endsWith("contents.html") ||
