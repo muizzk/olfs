@@ -57,7 +57,9 @@ public abstract class HttpResponder {
 
 
 
-    private HttpResponder(){}
+    protected HttpResponder(){
+        super();
+    }
 
     protected HttpResponder(String sysPath, String pathPrefix, String regexPattern){
         super();

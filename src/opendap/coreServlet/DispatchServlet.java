@@ -707,9 +707,18 @@ public class DispatchServlet extends HttpServlet {
      * @throws Exception For bad behaviour.
      */
     private DispatchHandler getDispatchHandler(HttpServletRequest request, Vector<DispatchHandler> dhvec) throws Exception {
+
+        String dispatchHandlerKey = getClass().getName()+"getDispatchHandler()";
+
+        DispatchHandler cachedDispatchHandler  = (DispatchHandler)RequestCache.get(dispatchHandlerKey);
+        if(cachedDispatchHandler!=null) {
+            return cachedDispatchHandler;
+        }
+
         for (DispatchHandler dh : dhvec) {
             log.debug("Checking handler: " + dh.getClass().getName());
             if (dh.requestCanBeHandled(request)) {
+                RequestCache.put(dispatchHandlerKey,dh);
                 return dh;
             }
         }

@@ -89,6 +89,8 @@ public class BesApi {
     public static final String W10N_FLATTEN   = "w10nFlatten";
     public static final String W10N_TRAVERSE   = "w10nTraverse";
 
+    public static final String SHOW_PATH_INFO  = "showPathInfo";
+
     public static final String REQUEST_ID      = "reqID";
 
     private static final Namespace BES_NS = opendap.namespaces.BES.BES_NS;
@@ -731,27 +733,35 @@ public class BesApi {
                 os);
     }
 
-    public void getPathInfoDocument(String dataSource, Document response)
+    public PathInfo getBesPathInfo(String path)
             throws PPTException,
             BadConfigurationException,
             IOException,
             JDOMException, BESError {
 
-
         ByteArrayOutputStream pathInfoDocString = new ByteArrayOutputStream();
-
-
-        writePathInfoResponse(dataSource,pathInfoDocString);
+        writePathInfoResponse(path,pathInfoDocString);
 
 
         SAXBuilder sb = new SAXBuilder();
 
         Document pathInfoResponseDoc = sb.build(new ByteArrayInputStream(pathInfoDocString.toByteArray()));
 
-        response.detachRootElement();
+        Element root = pathInfoResponseDoc.getRootElement();
 
-        response.setRootElement(pathInfoResponseDoc.detachRootElement());
+        Element spiElement = root.getChild(SHOW_PATH_INFO,BES_NS);
+        if(spiElement==null)
+            throw new IOException("The BES returned an invalid response to "+SHOW_PATH_INFO+" command." +
+                    " Missing "+SHOW_PATH_INFO+" element in response.");
 
+        Element pathInfoElement = spiElement.getChild(PathInfo.PATH_INFO,BES_NS);
+        if(pathInfoElement==null)
+            throw new IOException("The BES returned an invalid response to "+SHOW_PATH_INFO+" command." +
+                    " Missing "+PathInfo.PATH_INFO+" element in response.");
+
+        pathInfoElement.detach();
+        PathInfo pathInfo = new PathInfo(pathInfoElement);
+        return pathInfo;
     }
 
     public void getW10nPathInfoDocument(String dataSource, Document response)
@@ -2399,7 +2409,7 @@ public class BesApi {
 
     public Element showPathInfoRequestElement(String resource) {
         Element e;
-        Element spi = new Element("showPathInfo",BES_NS);
+        Element spi = new Element(SHOW_PATH_INFO,BES_NS);
 
         spi.setAttribute("node", resource);
 

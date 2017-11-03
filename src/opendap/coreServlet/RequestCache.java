@@ -132,7 +132,7 @@ public class RequestCache {
 
 
         if(co!=null) {
-            log.debug("Found cached document for key \""+ key+"\"");
+            log.debug("Found cached Object for key \""+ key+"\"");
 
             /*
             long now = new Date().getTime();
@@ -149,7 +149,7 @@ public class RequestCache {
 
         }
         else {
-            log.debug("No Document cached for key \""+ key+"\"");
+            log.debug("No Object cached for key \""+ key+"\"");
         }
 
 

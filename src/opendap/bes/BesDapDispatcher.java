@@ -36,10 +36,7 @@ import opendap.bes.dap4Responders.Iso19115.IsoDMR;
 import opendap.bes.dap4Responders.Iso19115.IsoRubricDMR;
 //import opendap.bes.dap4Responders.DataResponse.JsonDR;
 import opendap.bes.dap4Responders.Version;
-import opendap.coreServlet.DispatchHandler;
-import opendap.coreServlet.HttpResponder;
-import opendap.coreServlet.ReqInfo;
-import opendap.coreServlet.ServletUtil;
+import opendap.coreServlet.*;
 import opendap.dap.Dap2Service;
 import opendap.dap4.Dap4Service;
 import opendap.services.FileService;
@@ -359,12 +356,6 @@ public class BesDapDispatcher implements DispatchHandler {
         String relativeUrl = ReqInfo.getLocalUrl(request);
         // String dataSource = getBesApi().getBesDataSourceID(relativeUrl, false);
 
-        Document doc = new Document();
-
-        getBesApi().getPathInfoDocument(relativeUrl, doc);
-
-        XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
-        _log.debug("PathInfoDocument: \n{}",xmlo.outputString(doc));
 
 
         _log.debug("The client requested this resource: {}", relativeUrl);
@@ -374,6 +365,26 @@ public class BesDapDispatcher implements DispatchHandler {
                 relativeUrl.endsWith("/"))
             return false;
 
+        //###########################################################################
+        //###########################################################################
+        PathInfo pathInfo = getBesApi().getBesPathInfo(relativeUrl);
+        XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
+        _log.debug("PathInfo: \n{}",xmlo.outputString(pathInfo.getPathInfoElement()));
+        _log.debug("PathInfo: \n{}",pathInfo);
+        //###########################################################################
+        //###########################################################################
+
+
+        HttpResponder httpResponder  = (HttpResponder)RequestCache.get(httpResponderCacheKey);
+        if(httpResponder!=null) {
+            if(httpResponder instanceof NoMatchingResponder)
+                return false;
+            
+            if (sendResponse) {
+                httpResponder.respondToHttpGetRequest(request, response);
+            }
+            return true;
+        }
 
         for (HttpResponder r : _responders) {
             _log.debug("Checking responder: " + r.getClass().getSimpleName() + " (pathPrefix: " + r.getPathPrefix() + ")");
@@ -387,16 +398,15 @@ public class BesDapDispatcher implements DispatchHandler {
                     r.respondToHttpGetRequest(request, response);
 
                 }
-
+                RequestCache.put(httpResponderCacheKey,r);
                 return true;
             }
         }
-
-
+        RequestCache.put(httpResponderCacheKey,new NoMatchingResponder());
         return false;
-
     }
 
+    private static String httpResponderCacheKey = "opendap.bes.BesDapDispatcher.MatchingResponder" ;
 
     public long getLastModified(HttpServletRequest req) {
 
@@ -408,25 +418,37 @@ public class BesDapDispatcher implements DispatchHandler {
         if(!_initialized)
             return -1;
 
+        HttpResponder httpResponder  = (HttpResponder)RequestCache.get(httpResponderCacheKey);
 
-        for (HttpResponder r : _responders) {
-            if (r.matches(relativeUrl)) {
-                _log.info("The relative URL: " + relativeUrl + " matches " +
-                        "the pattern: \"" + r.getRequestMatchRegexString() + "\"");
-
-                try {
-
-                    long lmt =  r.getLastModified(req);
-                    _log.debug("getLastModified(): Returning: {}", new Date(lmt));
-                    return lmt;
-
-                } catch (Exception e) {
-                    _log.debug("getLastModified(): Returning: -1");
-                    return -1;
+        if(httpResponder==null){
+            for (HttpResponder r : _responders) {
+                if (r.matches(relativeUrl)) {
+                    _log.info("The relative URL: " + relativeUrl + " matches " +
+                            "the pattern: \"" + r.getRequestMatchRegexString() + "\"");
+                    httpResponder = r;
+                    break;
                 }
-
             }
+        }
 
+        if(httpResponder==null) {
+            RequestCache.put(httpResponderCacheKey,new NoMatchingResponder());
+        }
+        else {
+            RequestCache.put(httpResponderCacheKey,httpResponder);
+
+            if(httpResponder instanceof NoMatchingResponder)
+                return -1;
+
+            try {
+                long lmt =  httpResponder.getLastModified(req);
+                _log.debug("getLastModified(): Returning: {}", new Date(lmt));
+                return lmt;
+
+            } catch (Exception e) {
+                _log.debug("getLastModified(): Returning: -1");
+                return -1;
+            }
         }
 
         return -1;
