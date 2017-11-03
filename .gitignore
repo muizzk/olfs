@@ -1,4 +1,6 @@
 ## directories
+conf
+webapps
 
 ## OS-X Finder spoo
 *.DS_Store
