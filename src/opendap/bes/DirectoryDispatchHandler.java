@@ -82,17 +82,9 @@ public class DirectoryDispatchHandler implements DispatchHandler {
     public void init(HttpServlet s, Element config) throws Exception {
 
         if(initialized) return;
-
         dispatchServlet = s;
         systemPath = ServletUtil.getSystemPath(s,"");
-
         _besApi = new BesApi();
-
-
-        Element loginControls = config.getChild("AuthenticationControls");
-
-        AuthenticationControls.init(loginControls);
-
         initialized = true;
     }
 

@@ -26,6 +26,7 @@
 
 package opendap.coreServlet;
 
+import opendap.bes.PathInfo;
 import org.jdom.Element;
 
 import javax.servlet.http.HttpServlet;
@@ -34,17 +35,8 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  *
- * The IsoDispatchHandler interface is implemented by classes that are used to
+ * The DispatchHandler interface is implemented by classes that are used to
  * handle dispatch activities for Hyrax.
- *
- *
- *
- *
- *
- *
- *
- *
- *
  *
  */
 public interface DispatchHandler {
@@ -82,6 +74,9 @@ public interface DispatchHandler {
     public boolean requestCanBeHandled(HttpServletRequest request)
             throws Exception;
 
+//    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo besPathInfo)
+//            throws Exception;
+
     /**
      *
      * @param request The request to be handled.
@@ -92,6 +87,11 @@ public interface DispatchHandler {
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception;
+
+//    public void handleRequest(HttpServletRequest request,
+//                              PathInfo besPathInfo,
+//                              HttpServletResponse response)
+//            throws Exception;
 
     /**
      *

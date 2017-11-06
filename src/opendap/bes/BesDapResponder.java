@@ -75,6 +75,7 @@ public abstract class BesDapResponder extends DapResponder {
             return -1;
         }
 
+
         ResourceInfo ri = getResourceInfo(dataSource);
         return ri.lastModified();
 

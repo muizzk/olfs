@@ -367,10 +367,10 @@ public class BesDapDispatcher implements DispatchHandler {
 
         //###########################################################################
         //###########################################################################
-        PathInfo pathInfo = getBesApi().getBesPathInfo(relativeUrl);
-        XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
-        _log.debug("PathInfo: \n{}",xmlo.outputString(pathInfo.getPathInfoElement()));
-        _log.debug("PathInfo: \n{}",pathInfo);
+        //PathInfo pathInfo = getBesApi().getBesPathInfo(relativeUrl);
+        //XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
+        //_log.debug("PathInfo: \n{}",xmlo.outputString(pathInfo.getPathInfoElement()));
+        //_log.debug("PathInfo: \n{}",pathInfo);
         //###########################################################################
         //###########################################################################
 
@@ -422,6 +422,7 @@ public class BesDapDispatcher implements DispatchHandler {
 
         if(httpResponder==null){
             for (HttpResponder r : _responders) {
+
                 if (r.matches(relativeUrl)) {
                     _log.info("The relative URL: " + relativeUrl + " matches " +
                             "the pattern: \"" + r.getRequestMatchRegexString() + "\"");

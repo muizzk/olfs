@@ -60,6 +60,8 @@ public class PathInfo {
     private Date _lmt;
     private long _size;
 
+
+
     public PathInfo(Element piElement) throws IOException {
 
         String s;
@@ -145,4 +147,10 @@ public class PathInfo {
         sb.append("}\n");
         return sb.toString();
     }
+
+    public static String getCacheKey(String path){
+        String cacheKey = "{\""+Thread.currentThread().getName()+"\": { \"PathInfo\": \""+path+"\"}}";
+        return cacheKey;
+    }
+
 }

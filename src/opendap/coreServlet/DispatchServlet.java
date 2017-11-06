@@ -81,15 +81,11 @@ public class DispatchServlet extends HttpServlet {
      *
      * @serial
      */
-    private AtomicInteger reqNumber;
+    protected AtomicInteger reqNumber;
+    
+    protected Vector<DispatchHandler> httpGetDispatchHandlers;
+    protected Vector<DispatchHandler> httpPostDispatchHandlers;
 
-
-
-    private Vector<DispatchHandler> httpGetDispatchHandlers;
-    private Vector<DispatchHandler> httpPostDispatchHandlers;
-
-    private OpendapHttpDispatchHandler odh = null;
-    // private ThreddsHandler tdh = null;
     private org.slf4j.Logger log;
 
     private Document configDoc;
