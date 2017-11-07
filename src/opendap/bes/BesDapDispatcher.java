@@ -393,11 +393,12 @@ public class BesDapDispatcher implements DispatchHandler {
         }
 
         try {
-            // PathInfo pi = Squeak.besGetPathInfo(relativeUrl);
+            PathInfo pi = Squeak.besGetPathInfo(relativeUrl);
             for (HttpResponder r : _responders) {
                 _log.debug("Checking responder: " + r.getClass().getSimpleName() + " (pathPrefix: " + r.getPathPrefix() + ")");
                 Pattern p = r.getRequestSuffixMatchPattern();
-                Matcher m = p.matcher(relativeUrl);
+
+                Matcher m = p.matcher(pi.remainder());
                 if(m.matches()){
                     if (sendResponse){
                         r.respondToHttpGetRequest(request, response);
