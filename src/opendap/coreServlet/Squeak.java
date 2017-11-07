@@ -27,36 +27,31 @@
 package opendap.coreServlet;
 
 
-import opendap.bes.*;
-import opendap.bes.dap2Responders.BesApi;
-import opendap.http.AuthenticationControls;
-import opendap.logging.LogUtil;
-import opendap.logging.Timer;
-import opendap.logging.Procedure;
-import opendap.ncml.NcmlDatasetDispatcher;
-import opendap.ppt.PPTException;
-import opendap.threddsHandler.StaticCatalogDispatch;
-import org.jdom.Document;
-import org.jdom.Element;
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.StringTokenizer;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
+import opendap.bes.BESError;
+import opendap.bes.BESThreddsDispatchHandler;
+import opendap.bes.BadConfigurationException;
+import opendap.bes.BesDapDispatcher;
+import opendap.bes.DirectoryDispatchHandler;
+import opendap.bes.FileDispatchHandler;
+import opendap.bes.PathInfo;
+import opendap.bes.VersionDispatchHandler;
+import opendap.bes.dap2Responders.BesApi;
+import opendap.logging.LogUtil;
+import opendap.logging.Procedure;
+import opendap.logging.Timer;
+import opendap.ncml.NcmlDatasetDispatcher;
+import opendap.ppt.PPTException;
+import opendap.threddsHandler.StaticCatalogDispatch;
 
 /**
  * This servlet provides the dispatching for all OPeNDAP requests.
@@ -166,13 +161,14 @@ public class Squeak extends DispatchServlet {
     /**
      *
      * ************************************************************************
-     * Intitializes the servlet. Init (at this time) basically sets up
-     * the object opendap.util.Debug from the debuggery flags in the
+     * Initializes the servlet. The init() method (at this time) basically
+     * sets up the object opendap.util.Debug from the debuggery flags in the
      * servlet InitParameters. The Debug object can be referenced (with
      * impunity) from any of the dods code...
      *
      * @throws javax.servlet.ServletException
      */
+    @Override
     public void init() throws ServletException {
         _log = LoggerFactory.getLogger(getClass());
         super.init();
@@ -564,6 +560,7 @@ public class Squeak extends DispatchServlet {
      * @return Returns the time the HttpServletRequest object was last modified, in milliseconds
      *         since midnight January 1, 1970 GMT
      */
+    @Override
     protected long getLastModified(HttpServletRequest req) {
 
 
@@ -607,6 +604,7 @@ public class Squeak extends DispatchServlet {
     }
 
 
+    @Override
     public void destroy() {
 
         LogUtil.logServerShutdown("destroy()");
