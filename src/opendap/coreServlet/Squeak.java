@@ -28,6 +28,7 @@ package opendap.coreServlet;
 
 
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -64,9 +65,8 @@ import opendap.threddsHandler.StaticCatalogDispatch;
  * ordered collections of DispatchHandlers are identified at run time through
  * the olfs.xml configuration file. The olfs.xml file is identified in the
  * servlets web.xml file. The olfs.xml file is typically located in
- * $CATALINE_HOME/content/opendap.
- *
- * <p/>
+ * $CATALINE_HOME/content/opendap. <p/>
+ * 
  * <p>The web.xml file used to configure this servlet must contain servlet parameters identifying
  * the location of the olfs.xml file.</p>
  * <p/>
@@ -269,7 +269,7 @@ public class Squeak extends DispatchServlet {
                 if (Debug.isSet("probeRequest"))
                     _log.debug(ServletUtil.probeRequest(this, request));
 
-                DispatchHandler dh = getDispatchHandler(request);
+                DispatchHandler dh = getDispatchHandler_regex(request);
                 if (dh != null) {
                     _log.debug("Request being handled by: " + dh.getClass().getName());
                     dh.handleRequest(request, response);
@@ -431,7 +431,7 @@ public class Squeak extends DispatchServlet {
                 if (Debug.isSet("probeRequest"))
                     _log.debug(ServletUtil.probeRequest(this, request));
 
-                DispatchHandler dh = getDispatchHandler(request);
+                DispatchHandler dh = getDispatchHandler_regex(request);
                 if (dh != null) {
                     _log.debug("Request being handled by: " + dh.getClass().getName());
                     dh.handleRequest(request, response);
@@ -480,8 +480,7 @@ public class Squeak extends DispatchServlet {
      * @throws Exception For bad behaviour.
      */
     private DispatchHandler
-    getDispatchHandler(HttpServletRequest request)
-            throws Exception {
+    getDispatchHandler(HttpServletRequest request) throws Exception {
 
         String dispatchHandlerKey = getClass().getName()+"getDispatchHandler()";
         DispatchHandler cachedDispatchHandler  = (DispatchHandler)RequestCache.get(dispatchHandlerKey);
@@ -588,7 +587,7 @@ public class Squeak extends DispatchServlet {
             if (!LicenseManager.isExpired(req) && !ReqInfo.isServiceOnlyRequest(req)) {
 
 
-                DispatchHandler dh = getDispatchHandler(req);
+                DispatchHandler dh = getDispatchHandler_regex(req);
                 if (dh != null) {
                     _log.debug("getLastModified() -  Request being handled by: " + dh.getClass().getName());
                     lmt = dh.getLastModified(req);
@@ -626,6 +625,102 @@ public class Squeak extends DispatchServlet {
     }
 
 
+    String DAP2_REQUEST_REGEX = "^.*\\.(dds|das|dods|ascii|html|rdf|info|csv|tiff|jp2|json|iso|rubric)$";
+    String DAP4_REQUEST_REGEX = "^.*\\.(file|dsr(\\.(xml|html)?)|dmr(\\.(xml|html|json|rdf|iso|rubric))?|dap(\\.(json|csv|tiff|jp2|nc|nc4|xml)?))$";
+    String DAP_REQUEST_MATCH_REGEX = "(" + DAP2_REQUEST_REGEX + "|" + DAP4_REQUEST_REGEX + ")";
+    Pattern DapRequestPattern = Pattern.compile(DAP_REQUEST_MATCH_REGEX);
+    private boolean isDapRequest(String path){
+        return DapRequestPattern.matcher(path).matches();
+    }
+
+    /**
+     * Returns the first handler in the vector of DispatchHandlers that claims
+     * be able to handle the incoming request.
+     *
+     * @param request The request we are looking to handle
+     * @return The IsoDispatchHandler that can handle the request, null if no
+     *         handler claims the request.
+     * @throws Exception For bad behaviour.
+     */
+    private DispatchHandler
+    getDispatchHandler_regex(HttpServletRequest request)
+            throws Exception {
+
+        String dispatchHandlerKey = getClass().getName()+"getDispatchHandler()";
+        DispatchHandler cachedDispatchHandler  = (DispatchHandler)RequestCache.get(dispatchHandlerKey);
+        if(cachedDispatchHandler!=null) {
+            return cachedDispatchHandler;
+        }
+
+        DispatchHandler dispatchHandler = null;
+
+        String relativeUrl = ReqInfo.getLocalUrl(request);
+
+        if(relativeUrl.equals("version")){
+            // Send to StaticCatalogDispatch
+            dispatchHandler = _versionHandler;
+        }
+        if(relativeUrl.startsWith("thredds")){
+            // Send to StaticCatalogDispatch
+            dispatchHandler = _staticThreddsCatalogHandler;
+        }
+        else if (relativeUrl.startsWith("gateway")){
+                // Send to gateway.DispatchHandler
+                dispatchHandler = _gatewayHandler;
+        }
+        else if (relativeUrl.endsWith("/contents.html") ||
+                relativeUrl.endsWith("/catalog.html") ||
+                relativeUrl.endsWith("/")) {
+            dispatchHandler = _directoryHandler;
+        } else if (relativeUrl.endsWith("/catalog.xml")) {
+            // Send to BESThreddsDispatchHandler
+            dispatchHandler = _besThreddsHandler;
+        }
+        else if (relativeUrl.endsWith(".ncml")) {
+            // Send to BESThreddsDispatchHandler
+            dispatchHandler = _ncmlHandler;
+        }
+        else if(isDapRequest(relativeUrl)){
+            dispatchHandler = _dapHandler;
+        }
+        else {
+            PathInfo besPathInfo = besGetPathInfo(request);
+            String remainder = besPathInfo.remainder();
+            String validPath = besPathInfo.validPath();
+
+            if (remainder.isEmpty()) {
+                // This is the easy part, no remainder. It's a simple file or directory in the BES.
+                if (besPathInfo.isFile()) {
+                    if (besPathInfo.isData()) {
+                        if (validPath.toLowerCase().endsWith(".ncml")) {
+                            // Send to NcmlDatasetDispatcher  because NcML hack...
+                            dispatchHandler = _ncmlHandler;
+                        } else {
+                            // Send to BesDapDispatcher because data visibility is controlled there.
+                            dispatchHandler = _dapHandler;
+                        }
+                    } else {
+                        // Send to FileDispatchHandler
+                        dispatchHandler = _fileHandler;
+                    }
+                } else if (besPathInfo.isDir()) {
+                    // Send to directory dispatcher.
+                    dispatchHandler = _directoryHandler;
+                }
+            } else {
+                // So there's a remainder. Now the fun begins.
+                _log.debug("remainder: {}", remainder);
+
+                    // Looks like DAP request - send to BesDapDispatcher
+                    dispatchHandler = _dapHandler;
+            }
+        }
+
+        if(dispatchHandler!=null)
+            RequestCache.put(dispatchHandlerKey,dispatchHandler);
+
+        return dispatchHandler;
+    }
 
 
 }

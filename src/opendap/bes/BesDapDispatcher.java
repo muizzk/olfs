@@ -42,11 +42,8 @@ import opendap.dap4.Dap4Service;
 import opendap.ppt.PPTException;
 import opendap.services.FileService;
 import opendap.services.ServicesRegistry;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -380,8 +377,9 @@ public class BesDapDispatcher implements DispatchHandler {
         //###########################################################################
 
 
+        String cacheKey = httpResponderCacheKeyBase + "{ \"id\": \""+relativeUrl+"\"}}";
 
-        HttpResponder httpResponder  = (HttpResponder)RequestCache.get(httpResponderCacheKey);
+        HttpResponder httpResponder  = (HttpResponder)RequestCache.get(cacheKey);
         if(httpResponder!=null) {
             if(httpResponder instanceof NoMatchingResponder)
                 return false;
@@ -403,7 +401,7 @@ public class BesDapDispatcher implements DispatchHandler {
                     if (sendResponse){
                         r.respondToHttpGetRequest(request, response);
                     }
-                    RequestCache.put(httpResponderCacheKey,r);
+                    RequestCache.put(cacheKey,r);
                     return true;
                 }
             }
@@ -426,17 +424,17 @@ public class BesDapDispatcher implements DispatchHandler {
                     r.respondToHttpGetRequest(request, response);
 
                 }
-                RequestCache.put(httpResponderCacheKey,r);
+                RequestCache.put(httpResponderCacheKeyBase,r);
                 return true;
             }
         }
-        RequestCache.put(httpResponderCacheKey, new NoMatchingResponder());
+        RequestCache.put(httpResponderCacheKeyBase, new NoMatchingResponder());
         return false;
         */
 
     }
 
-    private static String httpResponderCacheKey = "opendap.bes.BesDapDispatcher.MatchingResponder" ;
+    private static String httpResponderCacheKeyBase = "{\"opendap.bes.BesDapDispatcher.MatchingResponder\": " ;
 
     public long getLastModified(HttpServletRequest req) {
         if(!_initialized)
@@ -460,7 +458,7 @@ public class BesDapDispatcher implements DispatchHandler {
 
 
 
-        HttpResponder httpResponder  = (HttpResponder)RequestCache.get(httpResponderCacheKey);
+        HttpResponder httpResponder  = (HttpResponder)RequestCache.get(httpResponderCacheKeyBase);
 
         if(httpResponder==null){
             for (HttpResponder r : _responders) {
@@ -475,10 +473,10 @@ public class BesDapDispatcher implements DispatchHandler {
         }
 
         if(httpResponder==null) {
-            RequestCache.put(httpResponderCacheKey,new NoMatchingResponder());
+            RequestCache.put(httpResponderCacheKeyBase,new NoMatchingResponder());
         }
         else {
-            RequestCache.put(httpResponderCacheKey,httpResponder);
+            RequestCache.put(httpResponderCacheKeyBase,httpResponder);
 
             if(httpResponder instanceof NoMatchingResponder)
                 return -1;
