@@ -180,21 +180,28 @@ public class Squeak extends DispatchServlet {
     }
 
 
-    public PathInfo getBesPathInfo(HttpServletRequest request)
+    public static PathInfo besGetPathInfo(HttpServletRequest request)
+            throws JDOMException, BadConfigurationException, PPTException, BESError, IOException {
+        String relativeUrl = ReqInfo.getLocalUrl(request);
+        return besGetPathInfo(relativeUrl);
+    }
+
+
+    public static PathInfo besGetPathInfo(String resourcePath)
             throws JDOMException, BadConfigurationException, PPTException, BESError, IOException {
 
+        Logger log = LoggerFactory.getLogger(Squeak.class);
         PathInfo besPathInfo;
-        String relativeUrl = ReqInfo.getLocalUrl(request);
-        String cacheKey = PathInfo.getCacheKey(relativeUrl);
+        String cacheKey = PathInfo.getCacheKey(resourcePath);
         besPathInfo = (PathInfo) RequestCache.get(cacheKey);
         if(besPathInfo!=null) {
-            _log.debug("RequestCache has PathInfo for key {}",cacheKey);
+            log.debug("getBesPathInfo() - RequestCache has PathInfo for key {}",cacheKey);
             return besPathInfo;
         }
         BesApi besApi = new BesApi();
-        besPathInfo = besApi.getBesPathInfo(relativeUrl);
-        RequestCache.put(cacheKey,besApi);
-        _log.debug("Adding PathInfo for key {} to RequestCache",cacheKey);
+        besPathInfo = besApi.getBesPathInfo(resourcePath);
+        RequestCache.put(cacheKey,besPathInfo);
+        log.debug("getBesPathInfo() - Adding PathInfo for key {} to RequestCache",cacheKey);
 
         return besPathInfo;
     }
@@ -487,7 +494,7 @@ public class Squeak extends DispatchServlet {
         }
 
         DispatchHandler dispatchHandler = null;
-        PathInfo besPathInfo = getBesPathInfo(request);
+        PathInfo besPathInfo = besGetPathInfo(request);
 
         String relativeUrl = ReqInfo.getLocalUrl(request);
         String remainder = besPathInfo.remainder();
@@ -501,8 +508,7 @@ public class Squeak extends DispatchServlet {
             // Send to gateway.DispatchHandler
             dispatchHandler = _gatewayHandler;
         }
-
-        if(remainder.isEmpty()){
+        else if(remainder.isEmpty()){
             // This is the easy part, no remainder. It's a simple file or directory in the BES.
             if(besPathInfo.isFile()){
                 if(besPathInfo.isData()) {

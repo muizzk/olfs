@@ -39,10 +39,12 @@ import opendap.bes.dap4Responders.Version;
 import opendap.coreServlet.*;
 import opendap.dap.Dap2Service;
 import opendap.dap4.Dap4Service;
+import opendap.ppt.PPTException;
 import opendap.services.FileService;
 import opendap.services.ServicesRegistry;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.slf4j.Logger;
@@ -51,8 +53,11 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -375,6 +380,7 @@ public class BesDapDispatcher implements DispatchHandler {
         //###########################################################################
 
 
+
         HttpResponder httpResponder  = (HttpResponder)RequestCache.get(httpResponderCacheKey);
         if(httpResponder!=null) {
             if(httpResponder instanceof NoMatchingResponder)
@@ -385,6 +391,27 @@ public class BesDapDispatcher implements DispatchHandler {
             }
             return true;
         }
+
+        try {
+            // PathInfo pi = Squeak.besGetPathInfo(relativeUrl);
+            for (HttpResponder r : _responders) {
+                _log.debug("Checking responder: " + r.getClass().getSimpleName() + " (pathPrefix: " + r.getPathPrefix() + ")");
+                Pattern p = r.getRequestSuffixMatchPattern();
+                Matcher m = p.matcher(relativeUrl);
+                if(m.matches()){
+                    if (sendResponse){
+                        r.respondToHttpGetRequest(request, response);
+                    }
+                    RequestCache.put(httpResponderCacheKey,r);
+                    return true;
+                }
+            }
+        } catch (IOException | PPTException | BESError | JDOMException  | BadConfigurationException e) {
+            _log.error("getLastModified() - Failed to get BES PathInfo object.");
+        }
+        return false;
+
+        /*
 
         for (HttpResponder r : _responders) {
             _log.debug("Checking responder: " + r.getClass().getSimpleName() + " (pathPrefix: " + r.getPathPrefix() + ")");
@@ -402,21 +429,35 @@ public class BesDapDispatcher implements DispatchHandler {
                 return true;
             }
         }
-        RequestCache.put(httpResponderCacheKey,new NoMatchingResponder());
+        RequestCache.put(httpResponderCacheKey, new NoMatchingResponder());
         return false;
+        */
+
     }
 
     private static String httpResponderCacheKey = "opendap.bes.BesDapDispatcher.MatchingResponder" ;
 
     public long getLastModified(HttpServletRequest req) {
+        if(!_initialized)
+            return -1;
 
+        try {
+            PathInfo pi = Squeak.besGetPathInfo(req);
+            if(pi!=null){
+                Date lmt = pi.lastModified();
+                _log.debug("getLastModified(): Returning: {}  ({})",lmt.getTime(),lmt.toString());
+                return lmt.getTime();
 
+            }
+        } catch (IOException | PPTException | BESError | JDOMException  | BadConfigurationException e) {
+            _log.error("getLastModified() - Failed to get BES PathInfo object.");
+        }
+        return -1;
 
+        /*
         String relativeUrl = ReqInfo.getLocalUrl(req);
 
 
-        if(!_initialized)
-            return -1;
 
         HttpResponder httpResponder  = (HttpResponder)RequestCache.get(httpResponderCacheKey);
 
@@ -454,6 +495,8 @@ public class BesDapDispatcher implements DispatchHandler {
 
         return -1;
 
+
+    */
 
     }
 

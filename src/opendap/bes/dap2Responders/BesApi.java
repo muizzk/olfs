@@ -41,6 +41,7 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -763,6 +764,8 @@ public class BesApi {
         PathInfo pathInfo = new PathInfo(pathInfoElement);
         return pathInfo;
     }
+
+
 
     public void getW10nPathInfoDocument(String dataSource, Document response)
             throws PPTException,
