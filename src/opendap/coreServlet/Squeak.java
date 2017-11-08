@@ -269,7 +269,7 @@ public class Squeak extends DispatchServlet {
                 if (Debug.isSet("probeRequest"))
                     _log.debug(ServletUtil.probeRequest(this, request));
 
-                DispatchHandler dh = getDispatchHandler_regex(request);
+                DispatchHandler dh = getDispatchHandler(request);
                 if (dh != null) {
                     _log.debug("Request being handled by: " + dh.getClass().getName());
                     dh.handleRequest(request, response);
@@ -431,7 +431,7 @@ public class Squeak extends DispatchServlet {
                 if (Debug.isSet("probeRequest"))
                     _log.debug(ServletUtil.probeRequest(this, request));
 
-                DispatchHandler dh = getDispatchHandler_regex(request);
+                DispatchHandler dh = getDispatchHandler(request);
                 if (dh != null) {
                     _log.debug("Request being handled by: " + dh.getClass().getName());
                     dh.handleRequest(request, response);
@@ -471,6 +471,82 @@ public class Squeak extends DispatchServlet {
 
 
     /**
+     * Gets the last modified date of the requested resource. Because the data handler is really
+     * the only entity capable of determining the last modified date the job is passed  through to it.
+     *
+     * @param req The current request
+     * @return Returns the time the HttpServletRequest object was last modified, in milliseconds
+     *         since midnight January 1, 1970 GMT
+     */
+    @Override
+    protected long getLastModified(HttpServletRequest req) {
+
+
+        RequestCache.openThreadCache();
+
+        long reqno = reqNumber.incrementAndGet();
+        LogUtil.logServerAccessStart(req, "HyraxAccess", "LAST-MOD", Long.toString(reqno));
+
+        long lmt = -1;
+
+        Procedure timedProcedure = Timer.start();
+        try {
+
+            if (ReqInfo.isServiceOnlyRequest(req)) {
+                return lmt;
+            }
+
+
+            if (!LicenseManager.isExpired(req) && !ReqInfo.isServiceOnlyRequest(req)) {
+
+
+                DispatchHandler dh = getDispatchHandler(req);
+                if (dh != null) {
+                    _log.debug("getLastModified() -  Request being handled by: " + dh.getClass().getName());
+                    lmt = dh.getLastModified(req);
+
+                }
+            }
+        } catch (Exception e) {
+            _log.error("getLastModifiedTime() - Caught " + e.getClass().getName() + " msg: " + e.getMessage());
+            lmt = -1;
+        } finally {
+            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "HyraxAccess");
+            Timer.stop(timedProcedure);
+
+        }
+
+
+        return lmt;
+
+    }
+
+
+    @Override
+    public void destroy() {
+
+        LogUtil.logServerShutdown("destroy()");
+
+
+        for(DispatchHandler dh : httpGetDispatchHandlers)
+            dh.destroy();
+
+        for(DispatchHandler dh : httpPostDispatchHandlers)
+            dh.destroy();
+
+        super.destroy();
+    }
+
+
+    private DispatchHandler getDispatchHandler(HttpServletRequest request)
+            throws Exception {
+        return getDispatchHandler_besInfo(request);
+
+    }
+
+
+
+    /**
      * Returns the first handler in the vector of DispatchHandlers that claims
      * be able to handle the incoming request.
      *
@@ -480,7 +556,7 @@ public class Squeak extends DispatchServlet {
      * @throws Exception For bad behaviour.
      */
     private DispatchHandler
-    getDispatchHandler(HttpServletRequest request) throws Exception {
+    getDispatchHandler_besInfo(HttpServletRequest request) throws Exception {
 
         String dispatchHandlerKey = getClass().getName()+"getDispatchHandler()";
         DispatchHandler cachedDispatchHandler  = (DispatchHandler)RequestCache.get(dispatchHandlerKey);
@@ -556,73 +632,6 @@ public class Squeak extends DispatchServlet {
         return dispatchHandler;
     }
 
-
-    /**
-     * Gets the last modified date of the requested resource. Because the data handler is really
-     * the only entity capable of determining the last modified date the job is passed  through to it.
-     *
-     * @param req The current request
-     * @return Returns the time the HttpServletRequest object was last modified, in milliseconds
-     *         since midnight January 1, 1970 GMT
-     */
-    @Override
-    protected long getLastModified(HttpServletRequest req) {
-
-
-        RequestCache.openThreadCache();
-
-        long reqno = reqNumber.incrementAndGet();
-        LogUtil.logServerAccessStart(req, "HyraxAccess", "LAST-MOD", Long.toString(reqno));
-
-        long lmt = -1;
-
-        Procedure timedProcedure = Timer.start();
-        try {
-
-            if (ReqInfo.isServiceOnlyRequest(req)) {
-                return lmt;
-            }
-
-
-            if (!LicenseManager.isExpired(req) && !ReqInfo.isServiceOnlyRequest(req)) {
-
-
-                DispatchHandler dh = getDispatchHandler_regex(req);
-                if (dh != null) {
-                    _log.debug("getLastModified() -  Request being handled by: " + dh.getClass().getName());
-                    lmt = dh.getLastModified(req);
-
-                }
-            }
-        } catch (Exception e) {
-            _log.error("getLastModifiedTime() - Caught " + e.getClass().getName() + " msg: " + e.getMessage());
-            lmt = -1;
-        } finally {
-            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "HyraxAccess");
-            Timer.stop(timedProcedure);
-
-        }
-
-
-        return lmt;
-
-    }
-
-
-    @Override
-    public void destroy() {
-
-        LogUtil.logServerShutdown("destroy()");
-
-
-        for(DispatchHandler dh : httpGetDispatchHandlers)
-            dh.destroy();
-
-        for(DispatchHandler dh : httpPostDispatchHandlers)
-            dh.destroy();
-
-        super.destroy();
-    }
 
 
     String DAP2_REQUEST_REGEX = "^.*\\.(dds|das|dods|ascii|html|rdf|info|csv|tiff|jp2|json|iso|rubric)$";
