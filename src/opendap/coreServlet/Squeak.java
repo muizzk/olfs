@@ -269,9 +269,16 @@ public class Squeak extends DispatchServlet {
                 if (Debug.isSet("probeRequest"))
                     _log.debug(ServletUtil.probeRequest(this, request));
 
-                DispatchHandler dh = getDispatchHandler(request);
+                PathInfo besPathInfo = besGetPathInfo(relativeUrl);
+
+                DispatchHandler dh = getDispatchHandler(request, besPathInfo);
                 if (dh != null) {
                     _log.debug("Request being handled by: " + dh.getClass().getName());
+
+                    if(dh instanceof DirectoryDispatchHandler){
+                        ((DirectoryDispatchHandler)dh).getLastModified_PathInfo(request,besPathInfo);
+                    }
+
                     dh.handleRequest(request, response);
 
                 } else {
@@ -431,7 +438,8 @@ public class Squeak extends DispatchServlet {
                 if (Debug.isSet("probeRequest"))
                     _log.debug(ServletUtil.probeRequest(this, request));
 
-                DispatchHandler dh = getDispatchHandler(request);
+                PathInfo pi = besGetPathInfo(relativeUrl);
+                DispatchHandler dh = getDispatchHandler(request,pi);
                 if (dh != null) {
                     _log.debug("Request being handled by: " + dh.getClass().getName());
                     dh.handleRequest(request, response);
@@ -498,13 +506,17 @@ public class Squeak extends DispatchServlet {
 
 
             if (!LicenseManager.isExpired(req) && !ReqInfo.isServiceOnlyRequest(req)) {
+                PathInfo besPathInfo = besGetPathInfo(req);
 
-
-                DispatchHandler dh = getDispatchHandler(req);
+                DispatchHandler dh = getDispatchHandler(req, besPathInfo);
                 if (dh != null) {
                     _log.debug("getLastModified() -  Request being handled by: " + dh.getClass().getName());
-                    lmt = dh.getLastModified(req);
-
+                    if(dh instanceof DirectoryDispatchHandler){
+                        lmt = ((DirectoryDispatchHandler)dh).getLastModified_PathInfo(req,besPathInfo);
+                    }
+                    else {
+                        lmt = dh.getLastModified(req);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -538,9 +550,9 @@ public class Squeak extends DispatchServlet {
     }
 
 
-    private DispatchHandler getDispatchHandler(HttpServletRequest request)
+    private DispatchHandler getDispatchHandler(HttpServletRequest request,PathInfo pi)
             throws Exception {
-        return getDispatchHandler_besInfo(request);
+        return getDispatchHandler_besInfo(request,pi);
 
     }
 
@@ -556,7 +568,7 @@ public class Squeak extends DispatchServlet {
      * @throws Exception For bad behaviour.
      */
     private DispatchHandler
-    getDispatchHandler_besInfo(HttpServletRequest request) throws Exception {
+    getDispatchHandler_besInfo(HttpServletRequest request, PathInfo besPathInfo) throws Exception {
 
         String dispatchHandlerKey = getClass().getName()+"getDispatchHandler()";
         DispatchHandler cachedDispatchHandler  = (DispatchHandler)RequestCache.get(dispatchHandlerKey);
@@ -565,7 +577,6 @@ public class Squeak extends DispatchServlet {
         }
 
         DispatchHandler dispatchHandler = null;
-        PathInfo besPathInfo = besGetPathInfo(request);
 
         String relativeUrl = ReqInfo.getLocalUrl(request);
         String remainder = besPathInfo.remainder();

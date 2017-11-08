@@ -98,6 +98,18 @@ public class DirectoryDispatchHandler implements DispatchHandler {
 
     }
 
+    public boolean requestCanBeHandled(PathInfo pi)
+            throws Exception {
+
+        return pi.isDir()&&(pi.remainder().isEmpty()||pi.remainder().equals("contents.html")||pi.remainder().equals("catalog.html") || pi.remainder().equals("/"));
+
+    }
+
+    public void handleRequest(HttpServletRequest request, PathInfo pi,
+                              HttpServletResponse response)
+            throws Exception {
+        directoryDispatch_PathInfo(request,pi,response);
+    }
 
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
@@ -109,6 +121,42 @@ public class DirectoryDispatchHandler implements DispatchHandler {
 
 
     public long getLastModified(HttpServletRequest req) {
+        return getLastModified_ResourceInfo(req);
+
+    }
+
+
+
+    public long getLastModified_PathInfo(PathInfo pathInfo) {
+
+        //Request oreq = new Request(null,req);
+        //String collectionName = getCollectionName(oreq);
+
+        log.debug("getLastModified():  Tomcat requesting getlastModified() for collection: " + pathInfo.validPath() );
+
+
+        long lmt = -1;
+
+        try {
+
+            if(pathInfo.remainder().endsWith("contents.html") ||
+                    pathInfo.remainder().endsWith("catalog.html") ||
+                    pathInfo.remainder().endsWith("catalog.xml") ||
+                    pathInfo.remainder().endsWith("/"))
+                 lmt = pathInfo.lastModified().getTime();
+
+
+        }
+        catch (Exception e) {
+            log.warn("getLastModified():  Failed to get PathInfo. Caught {}, Message: {}",e.getClass().getName(),e.getMessage());
+        }
+
+        log.debug("getLastModified():  Returning: " + new Date(lmt));
+        return lmt;
+    }
+
+
+    public long getLastModified_ResourceInfo(HttpServletRequest req) {
 
         Request oreq = new Request(null,req);
         String collectionName = getCollectionName(oreq);
@@ -149,9 +197,48 @@ public class DirectoryDispatchHandler implements DispatchHandler {
      *         otherwise.
      * @throws Exception .
      */
+
     private boolean directoryDispatch(HttpServletRequest request,
-                                     HttpServletResponse response,
-                                     boolean sendResponse) throws Exception {
+                                      HttpServletResponse response,
+                                      boolean sendResponse) throws Exception {
+
+        return directoryDispatch_ResourceInfo(request,response, sendResponse);
+
+    }
+
+
+
+
+    private void directoryDispatch_PathInfo(HttpServletRequest request,
+                                      PathInfo pathInfo,
+                                      HttpServletResponse response) throws Exception {
+
+
+        if(!pathInfo.path().endsWith("/") && pathInfo.remainder().isEmpty()) {
+            // Now that we certain that this is a directory request we
+            // redirect the URL without a trailing slash to the one with.
+            // This keeps everything copacetic downstream when it's time
+            // to build the directory document.
+            response.sendRedirect(Scrub.urlContent(request.getContextPath() + "/" + dispatchServlet.getServletName() + pathInfo.path() + "/"));
+        }
+        else {
+            xsltDir(request, response);
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+    private boolean directoryDispatch_ResourceInfo(HttpServletRequest request,
+                                      HttpServletResponse response,
+                                      boolean sendResponse) throws Exception {
 
 
         String dataSetName = ReqInfo.getDataSetName(request);
@@ -222,7 +309,7 @@ public class DirectoryDispatchHandler implements DispatchHandler {
             throws Exception {
 
 
-        log.info("sendDIR() request = " + request);
+        log.info("xsltDir() request = " + request);
 
         // String context = request.getContextPath();
 
@@ -247,7 +334,7 @@ public class DirectoryDispatchHandler implements DispatchHandler {
 
         _besApi.getBesCatalog(collectionName, showCatalogDoc);
 
-        log.debug("Catalog from BES:\n"+xmlo.outputString(showCatalogDoc));
+        // log.debug("Catalog from BES:\n"+xmlo.outputString(showCatalogDoc));
 
         JDOMSource besCatalog = new JDOMSource(showCatalogDoc);
 
@@ -293,7 +380,7 @@ public class DirectoryDispatchHandler implements DispatchHandler {
         while(!collectionName.equals("/") && collectionName.startsWith("/"))
             collectionName = collectionName.substring(1);
 
-        log.debug("collectionName:  "+collectionName);
+        log.debug("getCollectionName() - collectionName:  "+collectionName);
 
         return collectionName;
     }

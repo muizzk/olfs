@@ -153,4 +153,9 @@ public class PathInfo {
         return cacheKey;
     }
 
+    public boolean isDirRequest(){
+        String r = remainder();
+        return  isDir() && (r.isEmpty() || r.equals("contents.html") || r.equals("catalog.html") || r.equals("/"));
+    }
+
 }
