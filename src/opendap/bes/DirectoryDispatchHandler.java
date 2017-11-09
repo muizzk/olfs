@@ -26,6 +26,7 @@
 
 package opendap.bes;
 
+import opendap.PathBuilder;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.coreServlet.*;
 import opendap.dap.Request;
@@ -42,7 +43,6 @@ import org.slf4j.Logger;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.security.Principal;
 import java.util.Date;
 
 
@@ -88,29 +88,61 @@ public class DirectoryDispatchHandler implements DispatchHandler {
         initialized = true;
     }
 
+/*
     public boolean requestCanBeHandled(HttpServletRequest request)
-            throws Exception {
-
+                throws Exception {
         boolean val = directoryDispatch(request, null, false);
-
         log.info("requestCanBeHandled: "+val);
         return val;
-
     }
+*/
 
-    public boolean requestCanBeHandled(PathInfo pi)
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception {
 
         return pi.isDir()&&(pi.remainder().isEmpty()||pi.remainder().equals("contents.html")||pi.remainder().equals("catalog.html") || pi.remainder().equals("/"));
 
     }
 
-    public void handleRequest(HttpServletRequest request, PathInfo pi,
+    /**
+     * Performs dispatching for file requests. If a request is not for a
+     * special service or an OPeNDAP service then we attempt to resolve the
+     * request to a "file" located within the context of the data handler and
+     * return it's contents.
+     *
+     * @param request The client request
+     * @param pathInfo` he BES PathInfo object for this request.
+     * @param response The response object
+     * @throws Exception .
+     */
+    @Override
+    public void handleRequest(HttpServletRequest request,
+                              PathInfo pathInfo,
                               HttpServletResponse response)
             throws Exception {
-        directoryDispatch_PathInfo(request,pi,response);
+        if(!pathInfo.path().endsWith("/") && pathInfo.remainder().isEmpty()) {
+            // Now that we certain that this is a directory request we
+            // redirect the URL without a trailing slash to the one with.
+            // This keeps everything copacetic downstream when it's time
+            // to build the directory document.
+            // response.sendRedirect(Scrub.urlContent(request.getContextPath() + "/" + dispatchServlet.getServletName() + pathInfo.path() + "/"));
+
+            String redirectUrl = PathBuilder.pathConcat(request.getContextPath(),dispatchServlet.getServletName());
+            redirectUrl = PathBuilder.pathConcat(redirectUrl,pathInfo.path());
+            if(!redirectUrl.endsWith("/"))
+                redirectUrl += "/";
+            response.sendRedirect(Scrub.urlContent(redirectUrl));
+
+
+
+        }
+        else {
+            xsltDir(request, response);
+        }
     }
 
+    /*
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception {
@@ -118,44 +150,29 @@ public class DirectoryDispatchHandler implements DispatchHandler {
        directoryDispatch(request, response, true);
 
     }
+    */
 
-
+    /*
     public long getLastModified(HttpServletRequest req) {
         return getLastModified_ResourceInfo(req);
 
     }
+    */
 
 
-
-    public long getLastModified_PathInfo(PathInfo pathInfo) {
-
-        //Request oreq = new Request(null,req);
-        //String collectionName = getCollectionName(oreq);
-
+    @Override
+    public long getLastModified(PathInfo pathInfo) {
         log.debug("getLastModified():  Tomcat requesting getlastModified() for collection: " + pathInfo.validPath() );
-
-
         long lmt = -1;
 
-        try {
-
-            if(pathInfo.remainder().endsWith("contents.html") ||
-                    pathInfo.remainder().endsWith("catalog.html") ||
-                    pathInfo.remainder().endsWith("catalog.xml") ||
-                    pathInfo.remainder().endsWith("/"))
-                 lmt = pathInfo.lastModified().getTime();
-
-
-        }
-        catch (Exception e) {
-            log.warn("getLastModified():  Failed to get PathInfo. Caught {}, Message: {}",e.getClass().getName(),e.getMessage());
-        }
+        if(pathInfo.isDirectoryRequest())
+             lmt = pathInfo.lastModified().getTime();
 
         log.debug("getLastModified():  Returning: " + new Date(lmt));
         return lmt;
     }
 
-
+    /*
     public long getLastModified_ResourceInfo(HttpServletRequest req) {
 
         Request oreq = new Request(null,req);
@@ -176,7 +193,10 @@ public class DirectoryDispatchHandler implements DispatchHandler {
         }
     }
 
+    */
 
+
+    @Override
     public void destroy() {
         log.info("Destroy complete.");
 
@@ -198,6 +218,7 @@ public class DirectoryDispatchHandler implements DispatchHandler {
      * @throws Exception .
      */
 
+    /*
     private boolean directoryDispatch(HttpServletRequest request,
                                       HttpServletResponse response,
                                       boolean sendResponse) throws Exception {
@@ -205,35 +226,11 @@ public class DirectoryDispatchHandler implements DispatchHandler {
         return directoryDispatch_ResourceInfo(request,response, sendResponse);
 
     }
+    */
 
 
 
-
-    private void directoryDispatch_PathInfo(HttpServletRequest request,
-                                      PathInfo pathInfo,
-                                      HttpServletResponse response) throws Exception {
-
-
-        if(!pathInfo.path().endsWith("/") && pathInfo.remainder().isEmpty()) {
-            // Now that we certain that this is a directory request we
-            // redirect the URL without a trailing slash to the one with.
-            // This keeps everything copacetic downstream when it's time
-            // to build the directory document.
-            response.sendRedirect(Scrub.urlContent(request.getContextPath() + "/" + dispatchServlet.getServletName() + pathInfo.path() + "/"));
-        }
-        else {
-            xsltDir(request, response);
-        }
-
-    }
-
-
-
-
-
-
-
-
+/*
 
 
     private boolean directoryDispatch_ResourceInfo(HttpServletRequest request,
@@ -291,6 +288,7 @@ public class DirectoryDispatchHandler implements DispatchHandler {
 
     }
 
+ */
 
     /**
      * ************************************************************************

@@ -26,6 +26,7 @@
 package opendap.ncml;
 
 import opendap.bes.BesDapDispatcher;
+import opendap.bes.PathInfo;
 import opendap.coreServlet.HttpResponder;
 import opendap.coreServlet.ReqInfo;
 import org.jdom.Element;
@@ -94,14 +95,13 @@ public class NcmlDatasetDispatcher extends BesDapDispatcher {
 
     @Override
     public boolean requestDispatch(HttpServletRequest request,
+                                   PathInfo pi,
                                    HttpServletResponse response,
                                    boolean sendResponse)
             throws Exception {
 
-        String relativeUrl = ReqInfo.getLocalUrl(request);
-
-
-
+        String relativeUrl = pi.path();
+        
         log.debug("The client requested this resource: {}",relativeUrl);
 
         for (HttpResponder r : getResponders()) {

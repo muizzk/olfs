@@ -800,6 +800,21 @@ public class ReqInfo {
         return requestUrl;
     }
 
+    public static String getServiceLocalId(HttpServletRequest request){
+
+        String contextName = request.getContextPath();
+        String servletName = request.getServletPath();
+
+        String dapService = contextName + servletName;
+
+        log.debug("getServiceLocalId(): "+dapService);
+
+        return dapService;
+
+    }
+
+
+
 
 }                                                          
 

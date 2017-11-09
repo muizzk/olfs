@@ -45,17 +45,17 @@ public interface DispatchHandler {
     /**
      * Since a constructor cannot be defined for an interface there needs to
      * be a way to initialize the objects state. The init() method is that way.
-     * The IsoDispatchHandler that creates an instance of IsoDispatchHandler will
-     * pass itself into it along with the XML element that declared the
-     * IsoDispatchHandler in the configuration file (usually olfs.xml). The
+     * The HttpServlet that creates an instance of a DispatchHandler will
+     * pass itself into it along with the XML element that declares the
+     * DispatchHandler in the configuration file (usually olfs.xml). The
      * contents of this XML Element are not restricted and may (should?)
      * contain any required information for configuration not availableInChunk by
-     * interogating the IsoDispatchHandler's methods.
+     * interogating the DispatchHandler's methods.
      *
-     * @param servlet This should be the IsoDispatchHandler that creates the
-     * instance of IsoDispatchHandler that is being intialized.
-     * @param config A JDOM Element objct containing the XML Element that
-     * announced which implementation of IsoDispatchHandler to use. It may (or
+     * @param servlet This should be the HttpServlet that creates the
+     * instance of the DispatchHandler that is being intialized.
+     * @param config A JDOM Element object containing the XML Element that
+     * announced which implementation of DispatchHandler to use. It may (or
      * may not) contain additional confguration information.
      * @throws Exception When the bad things happen.
      * @see DispatchServlet
@@ -67,15 +67,16 @@ public interface DispatchHandler {
     /**
      *
      * @param request The request to be handled.
-     * @return True if the IsoDispatchHandler can service the request, false
+     * @param besPathInfo The BES PathInfo response ibject for this request
+     * @return True if the DispatchHandler can service the request, false
      * otherwise.
      * @throws Exception When the bad things happen.
      */
-    public boolean requestCanBeHandled(HttpServletRequest request)
-            throws Exception;
-
-//    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo besPathInfo)
+//    public boolean requestCanBeHandled(HttpServletRequest request)
 //            throws Exception;
+
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo besPathInfo)
+            throws Exception;
 
     /**
      *
@@ -84,14 +85,16 @@ public interface DispatchHandler {
      * will be placed.
      * @throws Exception When the bad things happen.
      */
+/*
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception;
 
-//    public void handleRequest(HttpServletRequest request,
-//                              PathInfo besPathInfo,
-//                              HttpServletResponse response)
-//            throws Exception;
+ */
+    public void handleRequest(HttpServletRequest request,
+                              PathInfo besPathInfo,
+                              HttpServletResponse response)
+            throws Exception;
 
     /**
      *
@@ -100,7 +103,16 @@ public interface DispatchHandler {
      * @return The last modified date of the URI referenced in th request.
      * @see javax.servlet.http.HttpServlet
      */
-    public long getLastModified(HttpServletRequest req);
+    // @Deprecated
+    // public long getLastModified(HttpServletRequest req);
+
+    /**
+     *
+     * @param besPathInfo The BES PathInfo response for the requested resource.
+     * @return The last modified date of the URI referenced in th request.
+     * @see javax.servlet.http.HttpServlet
+     */
+    public long getLastModified(PathInfo besPathInfo);
 
 
     /**

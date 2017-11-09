@@ -26,6 +26,7 @@
 
 package opendap.coreServlet;
 
+import opendap.bes.PathInfo;
 import org.jdom.Element;
 
 import javax.servlet.ServletOutputStream;
@@ -45,21 +46,42 @@ public class NoPostHandler implements DispatchHandler {
         // Do nothing
     }
 
-    public boolean requestCanBeHandled(HttpServletRequest request) throws Exception {
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi) throws Exception {
         return true;  // Always respond
     }
 
+    /*
     public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
         ServletOutputStream sos = response.getOutputStream();
         response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         response.setHeader("Allow","GET");
         sos.println("POST is not supported for this resource on this server.");
     }
+    */
 
+
+    @Override
+    public void handleRequest(HttpServletRequest request, PathInfo  pi, HttpServletResponse response) throws Exception {
+        ServletOutputStream sos = response.getOutputStream();
+        response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+        response.setHeader("Allow","GET");
+        sos.println("POST is not supported for this resource on this server.");
+    }
+
+
+    /*
     public long getLastModified(HttpServletRequest req) {
         return -1;  // punt...
     }
+    */
 
+    @Override
+    public long getLastModified(PathInfo pi) {
+        return -1;
+    }
+
+
+    @Override
     public void destroy() {
         // Do nothing
     }

@@ -25,6 +25,7 @@
  */
 package opendap.coreServlet;
 
+import opendap.bes.PathInfo;
 import opendap.http.error.Forbidden;
 import org.jdom.Element;
 
@@ -141,11 +142,13 @@ public class BotBlocker implements DispatchHandler {
     /**
      *
      * @param request The request to be handled.
+     * @param pi The BES PathInfo response object for the request. NOT USED. Null acceptable.
      * @return True if the IsoDispatchHandler can service the request, false
      * otherwise.
      * @throws Exception When the bad things happen.
      */
-    public boolean requestCanBeHandled(HttpServletRequest request)
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception {
 
         String remoteAddr = request.getRemoteAddr();
@@ -220,14 +223,7 @@ public class BotBlocker implements DispatchHandler {
     }
 
 
-    /**
-     *
-     * @param request The request to be handled.
-     * @param response The response object into which the response information
-     * will be placed.
-     * @throws Exception When the bad things happen.
-     */
-    public void handleRequest(HttpServletRequest request,
+/*    public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception {
 
@@ -242,31 +238,49 @@ public class BotBlocker implements DispatchHandler {
 
     }
 
+*/
 
-
+    /**
+     *
+     * @param request The request to be handled.
+     * @param pi The BES PathInfo response object for ths request.
+     * @param response The response object into which the response information
+     * will be placed.
+     * @throws Exception When the bad things happen.
+     */
+    @Override
+    public void handleRequest(HttpServletRequest request,
+                              PathInfo pi,
+                              HttpServletResponse response)
+            throws Exception {
+        String msg = "Denied access to "+request.getRemoteAddr()+" because it is " +
+                "either on the list, or matches a blocking pattern.";
+        log.info("handleRequest() - {}",msg);
+        throw new Forbidden(msg);
+    }
 
 
 
     /**
      *
      *
-     * @param req The request for which we need to get a last modified date.
+     * @param pi The BES PathInfo response ibject for this request..
      * @return The last modified date of the URI referenced in th request.
      * @see javax.servlet.http.HttpServlet
      */
-    public long getLastModified(HttpServletRequest req) {
+    @Override
+    public long getLastModified(PathInfo pi) {
         return -1;
-
     }
+
 
 
     /**
      * Called when the servlet is shutdown. Here is where to clean up open
      * connections etc.
      */
-    public void destroy() {
-
-    }
+    @Override
+    public void destroy() { }
 
 
 }

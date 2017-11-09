@@ -114,18 +114,18 @@ public class BESThreddsDispatchHandler implements DispatchHandler {
 
     }
 
-    public boolean requestCanBeHandled(HttpServletRequest request)
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception{
 
 
-        boolean isThreddsRequest = false;
+        boolean isThreddsRequest = pi.remainder().equals("catalog.xml");
+        _log.debug("{} a THREDDS catalog request.",(isThreddsRequest?"Identified":"Not"));
+        return isThreddsRequest;
 
-
+        /*
         String datasetname = ReqInfo.getDataSetName(request);
         String reqSuffix = ReqInfo.getRequestSuffix(request);
-
-
-
         if(     datasetname!=null &&
                 datasetname.equalsIgnoreCase("catalog") &&
                 reqSuffix!=null   &&
@@ -138,31 +138,22 @@ public class BESThreddsDispatchHandler implements DispatchHandler {
             _log.debug("Identified a THREDDS request.");
             return true;
         }
-
         _log.debug("Not a THREDDS request.");
         return false;
+        */
     }
 
-
-    /**
-     * Handles a request for a THREDDS catalog.
-     * @param request The request to be handled.
-     * @param response The response object into which the response information
-     * will be placed.
-     * @throws Exception
-     */
-    public void handleRequest(HttpServletRequest request,
-                              HttpServletResponse response)
-            throws Exception {
-
+    @Override
+    public void handleRequest(HttpServletRequest request, PathInfo pi, HttpServletResponse response) throws Exception {
 
         _log.debug("handleRequest() - Processing THREDDS request.");
-        Request oreq = new Request(_servlet,request);
+        String relativeUrl = ReqInfo.getLocalUrl(request);
 
         _log.debug(ServletUtil.probeRequest(_servlet, request));
 
         // Construct catalog name
-        String besCatalogName = Scrub.urlContent(oreq.getRelativeUrl());
+        /*
+        String besCatalogName = Scrub.urlContent(relativeUrl);
         if (besCatalogName.endsWith("/catalog.xml")) {
             besCatalogName = besCatalogName.substring(0, besCatalogName.lastIndexOf("catalog.xml"));
         }
@@ -170,6 +161,8 @@ public class BESThreddsDispatchHandler implements DispatchHandler {
             besCatalogName += "/";
         while (besCatalogName.startsWith("/") && besCatalogName.length()>1)
             besCatalogName = besCatalogName.substring(1);
+        */
+        String besCatalogName = pi.validPath();
         _log.debug("handleRequest() - besCatalogName:  " + besCatalogName);
 
 
@@ -187,7 +180,7 @@ public class BESThreddsDispatchHandler implements DispatchHandler {
         // Configure services
 
         // Add a DAP service, because we are a DAP server above all else.
-        showCatalogToThreddsCatalog.setParameter("dapService",oreq.getServiceLocalId());
+        showCatalogToThreddsCatalog.setParameter("dapService",ReqInfo.getServiceLocalId(request));
 
 
         String base = null;
@@ -242,7 +235,7 @@ public class BESThreddsDispatchHandler implements DispatchHandler {
 
         JDOMSource besCatalog = new JDOMSource(showCatalogDoc);
 
-        String threddsCatalogID = oreq.getServiceLocalId() + (besCatalogName.startsWith("/")?"":"/") + besCatalogName;
+        String threddsCatalogID = ReqInfo.getServiceLocalId(request) + (besCatalogName.startsWith("/")?"":"/") + besCatalogName;
 
 
         response.setContentType("text/xml");
@@ -342,29 +335,33 @@ public class BESThreddsDispatchHandler implements DispatchHandler {
      * don't know which time to return (catalog modified time, OR dataset
      * modified time) we punt and return -1.
      *
-     * @param req The request for which to get the last modified time.
+     * @param pi The BES PathInfo response object for the request.
      * @return The last time the thing refered to in the request was modified.
      */
+    @Override
+    public long getLastModified(PathInfo pi) {
+        return pi.lastModified().getTime();
+    }
+    /*
     public long getLastModified(HttpServletRequest req){
         String name = ReqInfo.getLocalUrl(req);
-
         _log.debug("getLastModified(): Tomcat requesting getlastModified() for " +
                 "collection: " + name );
         _log.debug("getLastModified(): Returning: -1" );
-
         return -1;
     }
+    */
 
 
 
+
+    @Override
     public void destroy(){
         _servlet = null;
         _initialized = false;
         _log.info("Destroy complete.");
 
     }
-
-
 
 
 }

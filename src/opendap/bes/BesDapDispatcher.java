@@ -38,7 +38,10 @@ import opendap.bes.dap4Responders.Iso19115.IsoRubricDMR;
 import opendap.bes.dap4Responders.Version;
 import opendap.coreServlet.*;
 import opendap.dap.Dap2Service;
+import opendap.dap4.Dap4Error;
 import opendap.dap4.Dap4Service;
+import opendap.http.error.BadRequest;
+import opendap.http.error.NotFound;
 import opendap.ppt.PPTException;
 import opendap.services.FileService;
 import opendap.services.ServicesRegistry;
@@ -324,11 +327,12 @@ public class BesDapDispatcher implements DispatchHandler {
     }
 
 
-    public boolean requestCanBeHandled(HttpServletRequest request)
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception {
-
+        
         _log.debug("************************************************************");
-        if (requestDispatch(request, null, false)) {
+        if (requestDispatch(request, pi, null,false)) {
             _log.debug("Request can be handled.");
             return true;
         }
@@ -337,34 +341,42 @@ public class BesDapDispatcher implements DispatchHandler {
         return false;
     }
 
-
+   /*
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception {
-
-        if (!requestDispatch(request, response, true)) {
+        PathInfo pi = Squeak.besGetPathInfo(request);
+        if(!requestDispatch(request,pi,response,true)){
             _log.error("Unable to service request.");
         }
+    }
+   */
 
+    @Override
+    public void handleRequest(HttpServletRequest request,
+                              PathInfo pi,
+                              HttpServletResponse response)
+            throws Exception {
 
+        if (!requestDispatch(request, pi, response, true)) {
+            _log.error("Unable to service request.");
+            throw new BadRequest("The thing you asked for: '"+pi.path()+"' makes no sense to me. " +
+                    "And when things don't make sense to me, I stop...");
+        }
     }
 
-
     public boolean requestDispatch(HttpServletRequest request,
+                                   PathInfo pi,
                                    HttpServletResponse response,
                                    boolean sendResponse)
             throws Exception {
 
-        String relativeUrl = ReqInfo.getLocalUrl(request);
-        // String dataSource = getBesApi().getBesDataSourceID(relativeUrl, false);
 
-
-
-        _log.debug("The client requested this resource: {}", relativeUrl);
-        if(relativeUrl.endsWith("contents.html") ||
-                relativeUrl.endsWith("catalog.html") ||
-                relativeUrl.endsWith("catalog.xml") ||
-                relativeUrl.endsWith("/"))
+        _log.debug("The client requested this resource: {}", pi.path());
+        if(pi.path().endsWith("contents.html") ||
+                pi.path().endsWith("catalog.html") ||
+                pi.path().endsWith("catalog.xml") ||
+                pi.path().endsWith("/"))
             return false;
 
         //###########################################################################
@@ -377,7 +389,7 @@ public class BesDapDispatcher implements DispatchHandler {
         //###########################################################################
 
 
-        String cacheKey = httpResponderCacheKeyBase + "{ \"id\": \""+relativeUrl+"\"}}";
+        String cacheKey = httpResponderCacheKeyBase + "{ \"id\": \""+pi.path()+"\"}}";
 
         HttpResponder httpResponder  = (HttpResponder)RequestCache.get(cacheKey);
         if(httpResponder!=null) {
@@ -390,25 +402,22 @@ public class BesDapDispatcher implements DispatchHandler {
             return true;
         }
 
-        try {
-            PathInfo pi = Squeak.besGetPathInfo(relativeUrl);
-            for (HttpResponder r : _responders) {
-                _log.debug("Checking responder: " + r.getClass().getSimpleName() + " (pathPrefix: " + r.getPathPrefix() + ")");
-                Pattern p = r.getRequestSuffixMatchPattern();
+        for (HttpResponder r : _responders) {
+            _log.debug("Checking responder: " + r.getClass().getSimpleName() +
+                    " (pathPrefix: " + r.getPathPrefix() + ")");
 
-                Matcher m = p.matcher(pi.remainder());
-                if(m.matches()){
-                    if (sendResponse){
-                        r.respondToHttpGetRequest(request, response);
-                    }
-                    RequestCache.put(cacheKey,r);
-                    return true;
+            Pattern p = r.getRequestSuffixMatchPattern();
+            Matcher m = p.matcher(pi.remainder());
+            if(m.matches()){
+                if (sendResponse){
+                    r.respondToHttpGetRequest(request, response);
                 }
+                RequestCache.put(cacheKey,r);
+                return true;
             }
-        } catch (IOException | PPTException | BESError | JDOMException  | BadConfigurationException e) {
-            _log.error("getLastModified() - Failed to get BES PathInfo object.");
         }
         return false;
+
 
         /*
 
@@ -436,30 +445,27 @@ public class BesDapDispatcher implements DispatchHandler {
 
     private static String httpResponderCacheKeyBase = "{\"opendap.bes.BesDapDispatcher.MatchingResponder\": " ;
 
-    public long getLastModified(HttpServletRequest req) {
+    @Override
+    public long getLastModified(PathInfo pi) {
         if(!_initialized)
             return -1;
 
-        try {
-            PathInfo pi = Squeak.besGetPathInfo(req);
-            if(pi!=null){
-                Date lmt = pi.lastModified();
-                _log.debug("getLastModified(): Returning: {}  ({})",lmt.getTime(),lmt.toString());
-                return lmt.getTime();
+        if(pi!=null){
+            Date lmt = pi.lastModified();
+            _log.debug("getLastModified(): Returning: {}  ({})",lmt.getTime(),lmt.toString());
+            return lmt.getTime();
 
-            }
-        } catch (IOException | PPTException | BESError | JDOMException  | BadConfigurationException e) {
-            _log.error("getLastModified() - Failed to get BES PathInfo object.");
         }
         return -1;
 
-        /*
+    }
+
+    /*
+    public long getLastModified(HttpServletRequest req) {
+
         String relativeUrl = ReqInfo.getLocalUrl(req);
 
-
-
         HttpResponder httpResponder  = (HttpResponder)RequestCache.get(httpResponderCacheKeyBase);
-
         if(httpResponder==null){
             for (HttpResponder r : _responders) {
 
@@ -491,16 +497,12 @@ public class BesDapDispatcher implements DispatchHandler {
                 return -1;
             }
         }
-
         return -1;
-
-
+    }
     */
 
-    }
 
-
-
+    @Override
     public void destroy() {
         _log.info("Destroy complete.");
 

@@ -40,29 +40,35 @@ public class PathInfo {
     public static final String VALID_PATH = "validPath";
     public static final String IS_DATA = "isData";
     public static final String IS_DIR = "isDir";
+    public static final String IS_ACCESSIBLE = "access";
     public static final String IS_FILE = "isFile";
     public static final String LMT = "lastModified";
     public static final String SIZE = "size";
     public static final String REMAINDER = "remainder";
 
 
-    private Element _pathInfoElement;
-    private Element _validPathElement;
-    private Element _remainderElement;
+    protected Element _pathInfoElement;
+    protected Element _validPathElement;
+    protected Element _remainderElement;
 
-    private String _path;
-    private String _validPath;
-    private String _remainder;
+    protected String _path;
+    protected String _validPath;
+    protected String _remainder;
 
-    private boolean _isDir;
-    private boolean _isFile;
-    private boolean _isData;
-    private Date _lmt;
-    private long _size;
+    protected boolean _isDir;
+    protected boolean _isFile;
+    protected boolean _isData;
+    protected boolean _canAccess;
+    protected Date _lmt;
+    protected long _size;
 
 
+    protected PathInfo(){
+
+    }
 
     public PathInfo(Element piElement) throws IOException {
+        this();
 
         String s;
 
@@ -71,45 +77,51 @@ public class PathInfo {
         _path = _pathInfoElement.getAttributeValue(PATH);
         if(_path==null)
             throw new IOException("BES returned invalid response the "+ BesApi.SHOW_PATH_INFO+" command. " +
-                    "Missing the "+PATH+" element in the response.");
+                    "Missing the '"+PATH+"' element in the response.");
 
         _validPathElement = _pathInfoElement.getChild(VALID_PATH, BES.BES_NS);
         if(_validPathElement==null)
             throw new IOException("BES returned invalid response the "+ BesApi.SHOW_PATH_INFO+" command. " +
-                    "Missing the "+VALID_PATH+" element in the response.");
+                    "Missing the '"+VALID_PATH+"' element in the response.");
 
         _validPath = _validPathElement.getTextTrim();
 
         s = _validPathElement.getAttributeValue(IS_DIR);
         if(s==null)
             throw new IOException("BES returned invalid response the "+ BesApi.SHOW_PATH_INFO+" command. " +
-                    "Missing the "+IS_DIR+" attribute of the "+VALID_PATH+" elemant in the response.");
+                    "Missing the '"+IS_DIR+"' attribute of the '"+VALID_PATH+"' element in the response.");
         _isDir = Boolean.parseBoolean(s);
 
         s = _validPathElement.getAttributeValue(IS_FILE);
         if(s==null)
             throw new IOException("BES returned invalid response the "+ BesApi.SHOW_PATH_INFO+" command. " +
-                    "Missing the "+IS_FILE+" attribute of the "+VALID_PATH+" elemant in the response.");
+                    "Missing the '"+IS_FILE+"' attribute of the '"+VALID_PATH+"' element in the response.");
         _isFile = Boolean.parseBoolean(s);
+
+        s = _validPathElement.getAttributeValue(IS_ACCESSIBLE);
+        if(s==null)
+            throw new IOException("BES returned invalid response the "+ BesApi.SHOW_PATH_INFO+" command. " +
+                    "Missing the '"+IS_ACCESSIBLE+"' attribute of the '"+VALID_PATH+" 'element in the response.");
+        _canAccess = Boolean.parseBoolean(s);
 
         s = _validPathElement.getAttributeValue(IS_DATA);
         if(s==null)
             throw new IOException("BES returned invalid response the "+ BesApi.SHOW_PATH_INFO+" command. " +
-                    "Missing the "+IS_DATA+" attribute of the "+VALID_PATH+" elemant in the response.");
+                    "Missing the '"+IS_DATA+"' attribute of the '"+VALID_PATH+" 'element in the response.");
         _isData = Boolean.parseBoolean(s);
 
 
         s = _validPathElement.getAttributeValue(LMT);
         if(s==null)
             throw new IOException("BES returned invalid response the "+ BesApi.SHOW_PATH_INFO+" command. " +
-                    "Missing the "+LMT+" attribute of the "+VALID_PATH+" elemant in the response.");
-        long time = Long.parseLong(s);
-        _lmt = new Date(time);
+                    "Missing the "+LMT+" attribute of the '"+VALID_PATH+" 'element in the response.");
+        long secondsSinceEpoch = Long.parseLong(s);
+        _lmt = new Date(secondsSinceEpoch);
 
         s = _validPathElement.getAttributeValue(SIZE);
         if(s==null)
             throw new IOException("BES returned invalid response the "+ BesApi.SHOW_PATH_INFO+" command. " +
-                    "Missing the "+SIZE+" attribute of the "+VALID_PATH+" elemant in the response.");
+                    "Missing the "+SIZE+" attribute of the '"+VALID_PATH+" 'element in the response.");
         _size = Long.parseLong(s);
 
         _remainderElement = _pathInfoElement.getChild(REMAINDER, BES.BES_NS);
@@ -131,6 +143,7 @@ public class PathInfo {
     public String remainder() { return _remainder; }
     public long size(){ return _size; }
     public Date lastModified(){ return _lmt; }
+    public boolean isAccessible(){ return _canAccess; }
 
     @Override
     public String toString(){
@@ -153,7 +166,11 @@ public class PathInfo {
         return cacheKey;
     }
 
-    public boolean isDirRequest(){
+    public String getCacheKey(){
+        return getCacheKey(_path);
+    }
+
+    public boolean isDirectoryRequest(){
         String r = remainder();
         return  isDir() && (r.isEmpty() || r.equals("contents.html") || r.equals("catalog.html") || r.equals("/"));
     }

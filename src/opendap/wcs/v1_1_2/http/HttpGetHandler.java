@@ -29,6 +29,7 @@ package opendap.wcs.v1_1_2.http;
 import net.sf.saxon.s9api.DocumentBuilder;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XdmNode;
+import opendap.bes.PathInfo;
 import opendap.coreServlet.ReqInfo;
 import opendap.coreServlet.Scrub;
 import opendap.coreServlet.ServletUtil;
@@ -97,6 +98,7 @@ public class HttpGetHandler implements opendap.coreServlet.DispatchHandler {
 
     }
 
+    @Override
     public void init(HttpServlet dispatchServlet, Element e) throws ServletException {
 
         init(dispatchServlet);
@@ -144,19 +146,34 @@ public class HttpGetHandler implements opendap.coreServlet.DispatchHandler {
 
 
 
-    public boolean requestCanBeHandled(HttpServletRequest request) throws Exception {
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi) throws Exception {
         return wcsRequestDispatch(request, null, false);
     }
 
-
+    /*
     public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
         wcsRequestDispatch(request, response, true);
     }
+    */
 
+    @Override
+    public void handleRequest(HttpServletRequest request, PathInfo  pi, HttpServletResponse response) throws Exception {
+        wcsRequestDispatch(request, response, true);
+    }
+
+    /*
     public long getLastModified(HttpServletRequest req) {
         return CatalogWrapper.getLastModified();
     }
+    */
 
+    @Override
+    public long getLastModified(PathInfo pi) {
+        return CatalogWrapper.getLastModified();
+    }
+
+    @Override
     public void destroy() {
         log.info("Shutting down catalog.");
         CatalogWrapper.destroy();

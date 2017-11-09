@@ -76,6 +76,7 @@ public class VersionDispatchHandler implements DispatchHandler {
 
     }
 
+    @Override
     public void init(HttpServlet s, Element config) throws Exception {
 
         if (initialized) return;
@@ -88,58 +89,45 @@ public class VersionDispatchHandler implements DispatchHandler {
         log.info("Initialized.");
     }
 
-    public boolean requestCanBeHandled(HttpServletRequest request)
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception {
-        return versionDispatch(request, null, false);
 
+        return pi.path()!= null && _requestMatchPattern.matcher(pi.path()).matches();
     }
 
 
+    /*
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception {
 
-        versionDispatch(request, response, true);
+        sendVersion(request, response);
+        log.debug("Sent Version Response");
 
     }
+    */
 
-    public long getLastModified(HttpServletRequest req) {
-        return -1;
+    @Override
+    public void handleRequest(HttpServletRequest request,
+                              PathInfo pi,
+                              HttpServletResponse response)
+            throws Exception {
+
+        sendVersion(request, response);
+        log.debug("Sent Version Response");
     }
 
+    @Override
+    public long getLastModified(PathInfo besPathInfo) { return -1; }
 
+    @Override
     public void destroy() {
         log.info("Destroy complete.");
 
     }
 
 
-    public boolean versionDispatch(HttpServletRequest request,
-                                   HttpServletResponse response,
-                                   boolean sendResponse)
-            throws Exception {
-
-
-        String relativeUrl = ReqInfo.getLocalUrl(request);
-
-        boolean versionRequest = false;
-
-        if (relativeUrl != null) {
-
-
-
-            Matcher m = _requestMatchPattern.matcher(relativeUrl);
-            if (m.matches()) {
-                versionRequest = true;
-                if (sendResponse) {
-                    sendVersion(request, response);
-                    log.debug("Sent Version Response");
-                }
-            }
-
-        }
-        return versionRequest;
-    }
 
 
     /**

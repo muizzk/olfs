@@ -25,6 +25,7 @@
  */
 package opendap.gateway;
 
+import opendap.bes.PathInfo;
 import opendap.coreServlet.*;
 import opendap.http.error.BadRequest;
 import opendap.logging.LogUtil;
@@ -160,6 +161,17 @@ public class DispatchServlet extends HttpServlet {
     }
 
 
+    class GatewayPathInfo extends PathInfo {
+        GatewayPathInfo(){
+            super();
+        }
+        GatewayPathInfo(HttpServletRequest req){
+            this();
+            _path = ReqInfo.getLocalUrl(req);  // FIXME! MAKE SURE THIS WORKS! MAY NEED TO POPULATE OTHER VALUES!
+            _isFile = true;
+            _isData = true;
+        }
+    }
 
     /**
      * Gets the last modified date of the requested resource. Because the data handler is really
@@ -179,7 +191,8 @@ public class DispatchServlet extends HttpServlet {
 
             if (ReqInfo.isServiceOnlyRequest(req))
                 return -1;
-            return _gatewayDispatchHandler.getLastModified(req);
+            PathInfo pi = new GatewayPathInfo(req);
+            return _gatewayDispatchHandler.getLastModified(pi);
 
 
         }
@@ -215,7 +228,8 @@ public class DispatchServlet extends HttpServlet {
 
             if (!redirect(request, response)) {
 
-                if(!_gatewayDispatchHandler.requestDispatch(request,response,true)){
+                GatewayPathInfo gpi = new GatewayPathInfo(request);
+                if(!_gatewayDispatchHandler.requestDispatch(request, gpi, response,true)){
                     if(!response.isCommitted()){
                         log.info("Sent BAD URL - not an OPeNDAP request suffix.");
                         throw new BadRequest("Bad Gateway URL! Not an OPeNDAP request suffix");

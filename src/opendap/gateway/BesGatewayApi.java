@@ -29,6 +29,7 @@ package opendap.gateway;
 import opendap.bes.BESError;
 import opendap.bes.BESResource;
 import opendap.bes.BadConfigurationException;
+import opendap.bes.PathInfo;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.coreServlet.OPeNDAPException;
 import opendap.coreServlet.ReqInfo;
@@ -43,9 +44,12 @@ import org.apache.commons.httpclient.methods.HeadMethod;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -62,16 +66,21 @@ import java.util.regex.Pattern;
 public class BesGatewayApi extends BesApi {
 
 
-    private Logger log;
+    private Logger _log;
     private String _servicePrefix;
 
+    public static final String
+            stripDotSuffixRegexString = "\\..*";
+    public static final Pattern stripDotSuffixPattern = Pattern.compile(stripDotSuffixRegexString);
+
     public BesGatewayApi(){
-        this("");
+        super();
+        _servicePrefix = "";
+        _log = org.slf4j.LoggerFactory.getLogger(this.getClass());
     }
 
     public BesGatewayApi(String servicePrefix){
-        super();
-        log = org.slf4j.LoggerFactory.getLogger(this.getClass());
+        this();
         _servicePrefix = servicePrefix;
     }
 
@@ -125,7 +134,7 @@ public class BesGatewayApi extends BesApi {
                 throws BadConfigurationException {
 
 
-        log.debug("Building request for BES gateway_module request. remoteDataSourceUrl: "+ remoteDataSourceUrl);
+        _log.debug("Building request for BES gateway_module request. remoteDataSourceUrl: "+ remoteDataSourceUrl);
         Element e, request = new Element("request", BES.BES_NS);
 
         String reqID = "["+Thread.currentThread().getName()+":"+
@@ -165,7 +174,7 @@ public class BesGatewayApi extends BesApi {
 
         request.addContent(e);
 
-        log.debug("Built request for BES gateway_module.");
+        _log.debug("Built request for BES gateway_module.");
 
 
         return new Document(request);
@@ -173,50 +182,30 @@ public class BesGatewayApi extends BesApi {
     }
 
     private String getDataSourceUrl(HttpServletRequest req, String pathPrefix)  {
-
-
         String relativeURL = ReqInfo.getLocalUrl(req);
-
         return getRemoteDataSourceUrl(relativeURL, pathPrefix, Pattern.compile(_regexToMatchLastDotSuffixString));
-
-
     }
 
     public String getRemoteDataSourceUrl(String relativeURL, String pathPrefix, Pattern suffixMatchPattern )  {
-
-
-
-        //String requestSuffix = ReqInfo.getSuffix(relativeURL);
-
-
 
         // Strip leading slash(es)
         while(relativeURL.startsWith("/") && !relativeURL.equals("/"))
             relativeURL = relativeURL.substring(1,relativeURL.length());
 
-
-
         String dataSourceUrl = relativeURL;
-
-
         // Strip the path off.
         if(pathPrefix!=null && dataSourceUrl.startsWith(pathPrefix))
             dataSourceUrl = dataSourceUrl.substring(pathPrefix.length());
 
-
         if(!dataSourceUrl.equals("")){
             dataSourceUrl = Util.dropSuffixFrom(dataSourceUrl, suffixMatchPattern);
         }
-
-
         dataSourceUrl = HexAsciiEncoder.hexToString(dataSourceUrl);
 
-//        URL url = new URL(dataSourceUrl);
-        //log.debug(urlInfo(url));
+        // URL url = new URL(dataSourceUrl);
+        // log.debug(urlInfo(url));
 
         return dataSourceUrl;
-
-
     }
 
 
@@ -314,7 +303,7 @@ public class BesGatewayApi extends BesApi {
     @Override
     public String getBesDataSourceID(String relativeUrl, Pattern suffixMatchPattern, boolean checkWithBes){
 
-        log.debug("getBesDataSourceID() - relativeUrl: " + relativeUrl);
+        _log.debug("getBesDataSourceID() - relativeUrl: " + relativeUrl);
 
 
         if(Util.matchesSuffixPattern(relativeUrl,suffixMatchPattern)){
@@ -322,17 +311,27 @@ public class BesGatewayApi extends BesApi {
 
                 String remoteDatasourceUrl = getRemoteDataSourceUrl(relativeUrl, _servicePrefix, suffixMatchPattern);
 
-                log.debug("getBesDataSourceID() - besDataSourceId: {}", remoteDatasourceUrl);
+                _log.debug("getBesDataSourceID() - besDataSourceId: {}", remoteDatasourceUrl);
                 return remoteDatasourceUrl;
             }
             catch (NumberFormatException e){
-                log.debug("getBesDataSourceID() - Failed to extract target dataset URL from relative URL '{}'", relativeUrl);
+                _log.debug("getBesDataSourceID() - Failed to extract target dataset URL from relative URL '{}'", relativeUrl);
             }
         }
 
         return null;
 
 
+    }
+    @Override
+    public PathInfo getBesPathInfo(String path)
+            throws PPTException,
+            BadConfigurationException,
+            IOException,
+            JDOMException, BESError {
+        
+        String resourceId = getBesDataSourceID(path, stripDotSuffixPattern,false);
+        return super.getBesPathInfo(resourceId);
     }
 
 
@@ -348,7 +347,7 @@ public class BesGatewayApi extends BesApi {
             int statusCode = httpClient.executeMethod(headReq);
 
             if (statusCode != HttpStatus.SC_OK) {
-                log.error("Unable to HEAD remote resource: " + dataSourceUrl);
+                _log.error("Unable to HEAD remote resource: " + dataSourceUrl);
                 String msg = "OLFS: Unable to access requested resource: " + dataSourceUrl;
                 throw new OPeNDAPException(statusCode,msg);
             }
@@ -362,7 +361,7 @@ public class BesGatewayApi extends BesApi {
                 try {
                     lastModified = format.parse(lmtString);
                 } catch (ParseException e) {
-                    log.warn("Failed to parse last modified time. LMT String: {}, resource URL: {}", lmtString, dataSourceUrl);
+                    _log.warn("Failed to parse last modified time. LMT String: {}, resource URL: {}", lmtString, dataSourceUrl);
                 }
             }
 
@@ -374,7 +373,7 @@ public class BesGatewayApi extends BesApi {
                 try {
                     size = Integer.parseInt(sizeStr);
                 } catch (NumberFormatException nfe) {
-                    log.warn("Received invalid content length from datasource: {}: ", dataSourceUrl);
+                    _log.warn("Received invalid content length from datasource: {}: ", dataSourceUrl);
                 }
             }
 
@@ -386,7 +385,7 @@ public class BesGatewayApi extends BesApi {
 
 
         } catch (Exception e) {
-            log.warn("Unable to HEAD the remote resource: {} Error Msg: {}", dataSourceUrl, e.getMessage());
+            _log.warn("Unable to HEAD the remote resource: {} Error Msg: {}", dataSourceUrl, e.getMessage());
         }
 
 

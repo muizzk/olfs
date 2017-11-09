@@ -26,6 +26,7 @@
 package opendap.nciso;
 
 import opendap.bes.BESResource;
+import opendap.bes.PathInfo;
 import opendap.bes.Version;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.bes.dap4Responders.MediaType;
@@ -58,8 +59,10 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
 
     private String _systemPath;
 
-    private String isoRequestPatternRegexString;
-    private Pattern isoRequestPattern;
+    private String _isoSuffixString;
+    private Pattern _isoSuffixPattern;
+    private String _isoRequestPatternRegexString;
+    private Pattern _isoRequestPattern;
 
     private Element _config;
 
@@ -80,8 +83,11 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
         _config = config;
         _systemPath = ServletUtil.getSystemPath(servlet,"");
 
-        isoRequestPatternRegexString = ".*\\.iso";
-        isoRequestPattern = Pattern.compile(isoRequestPatternRegexString, Pattern.CASE_INSENSITIVE);
+        _isoSuffixString = "\\.iso";
+        _isoSuffixPattern = Pattern.compile(_isoSuffixString+"$");
+
+        _isoRequestPatternRegexString = ".*"+_isoSuffixPattern+"$";
+        _isoRequestPattern = Pattern.compile(_isoRequestPatternRegexString, Pattern.CASE_INSENSITIVE);
 
 
         _besApi = new BesApi();
@@ -90,13 +96,40 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
 
     }
 
-    public boolean requestCanBeHandled(HttpServletRequest request)
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception {
-        return isoDispatch(request, null, false);
+
+
+        return _isoSuffixPattern.matcher(pi.remainder()).matches() && pi.isData();
+
+        /*
+        String requestURL = request.getRequestURL().toString();
+
+        boolean isIsoResponse = false;
+
+        if(isoRequestPattern.matcher(requestURL).matches())   {
+            String relativeUrl = ReqInfo.getLocalUrl(request);
+            String dataSource = ReqInfo.getBesDataSourceID(relativeUrl);
+            ResourceInfo dsi = new BESResource(dataSource,_besApi);
+
+            if (dsi.sourceExists() && dsi.isDataset()) {
+                isIsoResponse = true;
+            }
+
+        }
+
+        return isIsoResponse;
+        */
 
     }
 
+    @Override
+    public void handleRequest(HttpServletRequest request, PathInfo  pi, HttpServletResponse response) throws Exception {
+        sendIsoResponse(request,response);
+    }
 
+
+    /*
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception {
@@ -104,14 +137,10 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
        if(!isoDispatch(request, response, true))
            log.debug("FileDispatch request failed inexplicably!");
 
-    }
+    } */
 
 
-    /**
-     * See the contract for this method in opendap.coreServlet.IsoDispatchHandler
-     * @param req The request for which we need to get a last modified date.
-     * @return  The last modified time for the requested resource
-     */
+    /*
     public long getLastModified(HttpServletRequest req) {
 
         String name = ReqInfo.getLocalUrl(req);
@@ -132,9 +161,20 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
 
 
     }
+    */
 
 
+    /**
+     * See the contract for this method in opendap.coreServlet.IsoDispatchHandler
+     * @param pi The BES PathInfo response object for this request.
+     * @return  The last modified time for the requested resource
+     */
+    @Override
+    public long getLastModified(PathInfo pi){
+        return pi.lastModified().getTime();
+    }
 
+    @Override
     public void destroy() {
         log.info("Destroy complete.");
 
@@ -152,6 +192,7 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
      *         otherwise.
      * @throws Exception .
      */
+    /*
     private boolean isoDispatch(HttpServletRequest request,
                                HttpServletResponse response,
                                boolean sendResponse) throws Exception {
@@ -161,7 +202,7 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
 
         boolean isIsoResponse = false;
 
-        if(isoRequestPattern.matcher(requestURL).matches())   {
+        if(_isoRequestPattern.matcher(requestURL).matches())   {
             String relativeUrl = ReqInfo.getLocalUrl(request);
             String dataSource = ReqInfo.getBesDataSourceID(relativeUrl);
             ResourceInfo dsi = new BESResource(dataSource,_besApi);
@@ -178,6 +219,7 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
         return isIsoResponse;
 
     }
+    */
 
 
     /**

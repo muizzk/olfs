@@ -74,23 +74,46 @@ public class FileDispatchHandler implements DispatchHandler {
 
     }
 
-    public boolean requestCanBeHandled(HttpServletRequest request)
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception {
-        return fileDispatch(request, null, false);
 
+        return !pi.remainder().isEmpty() || !pi.isFile();
     }
 
 
+
+    /*
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception {
+        String relativeUrl = ReqInfo.getLocalUrl(request);
+        PathInfo pi = Squeak.besGetPathInfo(relativeUrl);
+        handleRequest(request,pi,response);
+    }
+    */
 
-       if(!fileDispatch(request, response, true))
-           log.debug("FileDispatch request failed inexplicably!");
+    @Override
+    public void handleRequest(HttpServletRequest request,
+                              PathInfo pi,
+                              HttpServletResponse response)
+            throws Exception {
+
+        if(pi.isAccessible()){
+            if(!pi.isData()){
+                sendFile(request, response);
+            }else {
+                throw new Forbidden("Datasets may not be accessed directly.");
+            }
+        }
+        else {
+            throw new Forbidden("You do not have permission to access the requested resource.");
+        }
 
     }
 
 
+    /*
     public long getLastModified(HttpServletRequest req) {
 
         String name = ReqInfo.getLocalUrl(req);
@@ -111,58 +134,20 @@ public class FileDispatchHandler implements DispatchHandler {
 
 
     }
+   */
 
 
+    @Override
+    public long getLastModified(PathInfo pi) {
 
-    public void destroy() {
-        log.info("Destroy complete.");
-
+        return pi.lastModified().getTime();
     }
 
-    /**
-     * Performs dispatching for file requests. If a request is not for a
-     * special service or an OPeNDAP service then we attempt to resolve the
-     * request to a "file" located within the context of the data handler and
-     * return it's contents.
-     *
-     * @param request      .
-     * @param response     .
-     * @param sendResponse If this is true a response will be sent. If it is
-     *                     the request will only be evaluated to determine if a response can be
-     *                     generated.
-     * @return true if the request was serviced as a file request, false
-     *         otherwise.
-     * @throws Exception .
-     */
-    public boolean fileDispatch(HttpServletRequest request,
-                                HttpServletResponse response,
-                                boolean sendResponse) throws Exception {
 
 
-        ResourceInfo dsi = new BESResource(ReqInfo.getLocalUrl(request),_besApi);
-
-        boolean isFileResponse = false;
-
-        if (dsi.sourceExists()) {
-            if (!dsi.isNode()) {
-                isFileResponse = true;
-                if (sendResponse) {
-                    if(dsi.sourceIsAccesible()){
-                        if (!dsi.isDataset() ){
-                            sendFile(request, response);
-                        } else {
-                            throw new Forbidden("Datasets may not be accessed directly.");
-                        }
-                    }
-                    else {
-                        throw new Forbidden("You do not have permission to access the requested resource.");
-                    }
-                }
-            }
-
-        }
-
-        return isFileResponse;
+    @Override
+    public void destroy() {
+        log.info("Destroy complete.");
 
     }
 

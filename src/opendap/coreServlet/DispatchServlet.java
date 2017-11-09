@@ -491,7 +491,9 @@ public class DispatchServlet extends HttpServlet {
                 DispatchHandler dh = getDispatchHandler(request, httpGetDispatchHandlers);
                 if (dh != null) {
                     log.debug("Request being handled by: " + dh.getClass().getName());
-                    dh.handleRequest(request, response);
+                    // dh.handleRequest(request, response);
+                    throw new Exception("This code is disabled.");
+
 
                 } else {
                     //send404(request,response);
@@ -655,7 +657,8 @@ public class DispatchServlet extends HttpServlet {
                 DispatchHandler dh = getDispatchHandler(request, httpPostDispatchHandlers);
                 if (dh != null) {
                     log.debug("Request being handled by: " + dh.getClass().getName());
-                    dh.handleRequest(request, response);
+                    //dh.handleRequest(request, null, response);
+                    throw new Exception("This code is disabled.");
 
                 } else {
                     throw  new OPeNDAPException(HttpServletResponse.SC_NOT_FOUND, "Failed to locate resource: "+relativeUrl);
@@ -713,7 +716,7 @@ public class DispatchServlet extends HttpServlet {
 
         for (DispatchHandler dh : dhvec) {
             log.debug("Checking handler: " + dh.getClass().getName());
-            if (dh.requestCanBeHandled(request)) {
+            if (dh.requestCanBeHandled(request,null)) {
                 RequestCache.put(dispatchHandlerKey,dh);
                 return dh;
             }
@@ -753,8 +756,8 @@ public class DispatchServlet extends HttpServlet {
                 DispatchHandler dh = getDispatchHandler(req, httpGetDispatchHandlers);
                 if (dh != null) {
                     log.debug("getLastModified() -  Request being handled by: " + dh.getClass().getName());
-                    lmt = dh.getLastModified(req);
-
+                    //lmt = dh.getLastModified(req);
+                    throw new Exception("This code is disabled.");
                 }
             }
         } catch (Exception e) {

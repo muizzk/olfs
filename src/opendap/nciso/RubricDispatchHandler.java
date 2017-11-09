@@ -27,6 +27,7 @@ package opendap.nciso;
 
 import opendap.bes.BESError;
 import opendap.bes.BESResource;
+import opendap.bes.PathInfo;
 import opendap.bes.Version;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.bes.dap4Responders.MediaType;
@@ -62,6 +63,9 @@ public class RubricDispatchHandler implements opendap.coreServlet.DispatchHandle
 
     private String _systemPath;
 
+    private String rubricSuffixString;
+    private Pattern rubricSuffixPattern;
+
     private String rubricRequestPatternRegexString;
     private Pattern rubricRequestPattern;
 
@@ -84,7 +88,10 @@ public class RubricDispatchHandler implements opendap.coreServlet.DispatchHandle
         _config = config;
         _systemPath = ServletUtil.getSystemPath(servlet,"");
 
-        rubricRequestPatternRegexString = ".*\\.rubric";
+        rubricSuffixString = "\\.rubric";
+        rubricSuffixPattern = Pattern.compile(rubricSuffixString+"$", Pattern.CASE_INSENSITIVE);
+
+        rubricRequestPatternRegexString = ".*"+rubricSuffixString+"$";
         rubricRequestPattern = Pattern.compile(rubricRequestPatternRegexString, Pattern.CASE_INSENSITIVE);
 
         _besApi = new BesApi();
@@ -94,28 +101,45 @@ public class RubricDispatchHandler implements opendap.coreServlet.DispatchHandle
 
     }
 
-    public boolean requestCanBeHandled(HttpServletRequest request)
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception {
-        return rubricDispatch(request, null, false);
 
+        return !pi.remainder().isEmpty() && rubricSuffixPattern.matcher(pi.remainder()).matches() && pi.isData();
+
+        /*
+        String relativePath = ReqInfo.getLocalUrl(request);
+
+        if(rubricRequestPattern.matcher(relativePath).matches()){
+            PathInfo pi = Squeak.besGetPathInfo(relativePath);
+            return pi.remainder().isEmpty() && pi.isData();
+        }
+        return false;
+        */
     }
 
 
+    /*
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception {
 
-       if(!rubricDispatch(request, response, true))
-           log.debug("FileDispatch request failed inexplicably!");
+        sendrubricResponse(request,response);
+
+    }
+    */
+    @Override
+    public void handleRequest(HttpServletRequest request,
+                              PathInfo pi,
+                              HttpServletResponse response)
+            throws Exception {
+
+        sendrubricResponse(request,response);
 
     }
 
 
-    /**
-     * See the contract for this method in opendap.coreServlet.IsoDispatchHandler
-     * @param req The request for which we need to get a last modified date.
-     * @return
-     */
+    /*
     public long getLastModified(HttpServletRequest req) {
 
         String name = ReqInfo.getLocalUrl(req);
@@ -136,9 +160,21 @@ public class RubricDispatchHandler implements opendap.coreServlet.DispatchHandle
 
 
     }
+    */
+
+    /**
+     * See the contract for this method in opendap.coreServlet.IsoDispatchHandler
+     * @param pi The BES PathInfo response object for the request
+     * @return ye olde LMT
+     */
+    @Override
+    public long getLastModified(PathInfo pi) {
+        return pi.lastModified().getTime();
+    }
 
 
 
+    @Override
     public void destroy() {
         log.info("Destroy complete.");
 
@@ -156,6 +192,7 @@ public class RubricDispatchHandler implements opendap.coreServlet.DispatchHandle
      *         otherwise.
      * @throws Exception .
      */
+    /*
     private boolean rubricDispatch(HttpServletRequest request,
                                HttpServletResponse response,
                                boolean sendResponse) throws Exception {
@@ -182,7 +219,7 @@ public class RubricDispatchHandler implements opendap.coreServlet.DispatchHandle
         return isrubricResponse;
 
     }
-
+    */
 
     /**
      * This method is responsible for sending rubric metadata responses to the client.

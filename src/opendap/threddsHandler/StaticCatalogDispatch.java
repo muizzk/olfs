@@ -29,6 +29,7 @@ import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XdmNode;
 import opendap.bes.BESError;
 import opendap.bes.BadConfigurationException;
+import opendap.bes.PathInfo;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.coreServlet.*;
 import opendap.dap.Request;
@@ -74,19 +75,19 @@ public class StaticCatalogDispatch implements DispatchHandler {
     private boolean _initialized;
     private HttpServlet _dispatchServlet;
     private String _prefix;
-    boolean _useMemoryCache = false;
+    private boolean _useMemoryCache = false;
 
-    String _catalogToHtmlTransformFile = "/xsl/threddsCatalogPresentation.xsl";
-    Transformer _catalogToHtmlTransform = null;
-    ReentrantLock _catalogToHtmlTransformLock;
+    private String _catalogToHtmlTransformFile = "/xsl/threddsCatalogPresentation.xsl";
+    private Transformer _catalogToHtmlTransform = null;
+    private ReentrantLock _catalogToHtmlTransformLock;
 
-    String _datasetToHtmlTransformFile = "/xsl/threddsDatasetDetail.xsl";
-    Transformer _datasetToHtmlTransform = null;
-    ReentrantLock _datasetToHtmlTransformLock;
+    private String _datasetToHtmlTransformFile = "/xsl/threddsDatasetDetail.xsl";
+    private Transformer _datasetToHtmlTransform = null;
+    private ReentrantLock _datasetToHtmlTransformLock;
 
 
 
-    String _staticCatalogIngestTransformFile = "/xsl/threddsCatalogIngest.xsl";
+    private static final String _staticCatalogIngestTransformFile = "/xsl/threddsCatalogIngest.xsl";
 
     public StaticCatalogDispatch() {
 
@@ -600,6 +601,7 @@ public class StaticCatalogDispatch implements DispatchHandler {
     }
 
 
+    @Override
     public void init(HttpServlet servlet, Element configuration) throws Exception {
 
 
@@ -766,51 +768,55 @@ public class StaticCatalogDispatch implements DispatchHandler {
         _initialized = true;
     }
 
-    public boolean requestCanBeHandled(HttpServletRequest request) throws Exception {
-        return threddsRequestDispatch(request, null, false);
+
+
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi) throws Exception {
+        return requestCanBeHandled(pi.path());
     }
-
-    public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        threddsRequestDispatch(request, response, true);
-    }
-
-
-    private boolean threddsRequestDispatch(HttpServletRequest request,
-                                           HttpServletResponse response,
-                                           boolean sendResponse)
-            throws Exception {
-
-        String relativeUrl = ReqInfo.getLocalUrl(request);
-        String dataSource = relativeUrl; //_besApi.getBesDataSourceID(relativeUrl,false);
-        //String requestSuffixRegex = ReqInfo.getRequestSuffix(request);
-
+    
+    public boolean requestCanBeHandled(String relativeUrl) throws Exception {
+        String dataSource = relativeUrl;
         boolean threddsRequest = false;
 
         if (dataSource != null) {
-
-
             // Since we know the _prefix does not begin with slash, strip any
             // leading slashes from the dataSource name.
             while (dataSource.startsWith("/"))
                 dataSource = dataSource.substring(1, dataSource.length());
-
 
             // We know the _prefix ends in slash. So let's strip the slash
             // before we compare. This makes sure that we pick up the URL
             // that ends with the prefix and no slash
             if (dataSource.startsWith(_prefix.substring(0, _prefix.length() - 1))) {
                 threddsRequest = true;
-                if (sendResponse) {
-                    sendThreddsCatalogResponse(request, response);
-                    _log.info("Sent THREDDS Response");
-                }
             }
         }
         return threddsRequest;
     }
 
 
+    /*
+    public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        sendThreddsCatalogResponse(request, response);
+    }
+    */
+
+
+    @Override
+    public void handleRequest(HttpServletRequest request, PathInfo pi,  HttpServletResponse response) throws Exception {
+        sendThreddsCatalogResponse(request, response);
+    }
+
+
+    /*
     public long getLastModified(HttpServletRequest req) {
+        String relativeUrl = ReqInfo.getLocalUrl(req);
+        return getLastModified(relativeUrl);
+    }
+    */
+    /*
+    public long getLastModified(String relativeUrl) {
 
         Procedure timedProc = Timer.start();
 
@@ -818,8 +824,34 @@ public class StaticCatalogDispatch implements DispatchHandler {
 
         String catalogKey = null;
         try {
-            catalogKey = getCatalogKeyFromRelativeUrl(ReqInfo.getLocalUrl(req));
-            if (requestCanBeHandled(req)) {
+            catalogKey = getCatalogKeyFromRelativeUrl(relativeUrl);
+            if (requestCanBeHandled(relativeUrl)) {
+                long lm = CatalogManager.getLastModified(catalogKey);
+                _log.debug("lastModified(" + catalogKey + "): " + (lm == -1 ? "unknown" : new Date(lm)));
+                return lm;
+            }
+        }
+        catch (Exception e) {
+            _log.error("Failed to get a last modified time for '" + Scrub.urlContent(catalogKey) + "'  msg: " + e.getMessage());
+        }
+        finally {
+            Timer.stop(timedProc);
+        }
+
+        return -1;
+    }
+    */
+
+    @Override
+    public long getLastModified(PathInfo pi) {
+        Procedure timedProc = Timer.start();
+
+        RequestCache.openThreadCache();
+
+        String catalogKey = null;
+        try {
+            if (requestCanBeHandled(pi.path())) {
+                catalogKey = getCatalogKeyFromRelativeUrl(pi.path());
                 long lm = CatalogManager.getLastModified(catalogKey);
                 _log.debug("lastModified(" + catalogKey + "): " + (lm == -1 ? "unknown" : new Date(lm)));
                 return lm;
@@ -835,6 +867,8 @@ public class StaticCatalogDispatch implements DispatchHandler {
         return -1;
     }
 
+
+    @Override
     public void destroy() {
 
         CatalogManager.destroy();

@@ -214,7 +214,7 @@ public class Servlet extends HttpServlet {
         int request_status = HttpServletResponse.SC_OK;
         try {
             LogUtil.logServerAccessStart(req, "WCS_2.0_ACCESS", "HTTP-GET", Integer.toString(reqNumber.incrementAndGet()));
-            httpGetService.handleRequest(req, resp);
+            httpGetService.handleRequest(req, null, resp);
         }
         catch (Throwable t) {
             try {
@@ -279,14 +279,14 @@ public class Servlet extends HttpServlet {
         try {
             LogUtil.logServerAccessStart(req, "WCS_2.0_ACCESS", "HTTP-POST", Integer.toString(reqNumber.incrementAndGet()));
 
-            if(wcsPostService.requestCanBeHandled(req)){
-                wcsPostService.handleRequest(req,resp);
+            if(wcsPostService.requestCanBeHandled(req,null)){
+                wcsPostService.handleRequest(req,null, resp);
             }
-            else if(wcsSoapService.requestCanBeHandled(req)){
-                wcsSoapService.handleRequest(req,resp);
+            else if(wcsSoapService.requestCanBeHandled(req,null)){
+                wcsSoapService.handleRequest(req,null, resp);
             }
-            else if(formService.requestCanBeHandled(req)){
-                formService.handleRequest(req,resp);
+            else if(formService.requestCanBeHandled(req,null)){
+                formService.handleRequest(req,null, resp);
             }
             else {
                 String msg = "The request does not resolve to a WCS service operation that this server supports.";

@@ -124,35 +124,42 @@ public class Squeak extends DispatchServlet {
 
     private void sortHandlers() throws ServletException {
         for(DispatchHandler dh : httpGetDispatchHandlers){
-            if(dh instanceof BesDapDispatcher)
-                _dapHandler = (BesDapDispatcher) dh;
-
-            else if(dh instanceof VersionDispatchHandler)
-                _versionHandler = (VersionDispatchHandler)dh;
-
-            else if(dh instanceof NcmlDatasetDispatcher)
-                _ncmlHandler = (NcmlDatasetDispatcher)dh;
-
-            else if(dh instanceof StaticCatalogDispatch)
-                _staticThreddsCatalogHandler = (StaticCatalogDispatch) dh;
-
-            else if(dh instanceof opendap.gateway.DispatchHandler)
+            _log.debug("Processing instance of {}",dh.getClass().getName());
+            if(dh instanceof opendap.bes.VersionDispatchHandler) {
+                _versionHandler = (opendap.bes.VersionDispatchHandler) dh;
+                _log.debug("Set _versionHandler - Instance of {}",_versionHandler.getClass().getName());
+            }
+            else if(dh instanceof opendap.ncml.NcmlDatasetDispatcher) {
+                _ncmlHandler = (opendap.ncml.NcmlDatasetDispatcher) dh;
+                _log.debug("Set _ncmlHandler - Instance of {}",_ncmlHandler.getClass().getName());
+            }
+            else if(dh instanceof opendap.threddsHandler.StaticCatalogDispatch) {
+                _staticThreddsCatalogHandler = (opendap.threddsHandler.StaticCatalogDispatch) dh;
+                _log.debug("Set _staticThreddsCatalogHandler - Instance of {}",_staticThreddsCatalogHandler.getClass().getName());
+            }
+            else if(dh instanceof opendap.gateway.DispatchHandler) {
                 _gatewayHandler = (opendap.gateway.DispatchHandler) dh;
-
-            else if(dh instanceof BesDapDispatcher)
+                _log.debug("Set _gatewayHandler - Instance of {}",_gatewayHandler.getClass().getName());
+            }
+            else if(dh instanceof BesDapDispatcher) {
                 _dapHandler = (BesDapDispatcher) dh;
-
-            else if(dh instanceof DirectoryDispatchHandler)
-                _directoryHandler = (DirectoryDispatchHandler) dh;
-
-            else if(dh instanceof BESThreddsDispatchHandler)
-                _besThreddsHandler = (BESThreddsDispatchHandler) dh;
-
-            else if(dh instanceof FileDispatchHandler)
-                _fileHandler = (FileDispatchHandler) dh;
-
-            else
-                throw new ServletException("Unknown DispatchHandler type: "+dh.getClass().getName()) ;
+                _log.debug("Set _dapHandler - Instance of {}",_dapHandler.getClass().getName());
+            }
+            else if(dh instanceof opendap.bes.DirectoryDispatchHandler) {
+                _directoryHandler = (opendap.bes.DirectoryDispatchHandler) dh;
+                _log.debug("Set _directoryHandler - Instance of {}",_directoryHandler.getClass().getName());
+            }
+            else if(dh instanceof opendap.bes.BESThreddsDispatchHandler) {
+                _besThreddsHandler = (opendap.bes.BESThreddsDispatchHandler) dh;
+                _log.debug("Set _besThreddsHandler - Instance of {}",_besThreddsHandler.getClass().getName());
+            }
+            else if(dh instanceof opendap.bes.FileDispatchHandler) {
+                _fileHandler = (opendap.bes.FileDispatchHandler) dh;
+                _log.debug("Set _fileHandler - Instance of {}",_fileHandler.getClass().getName());
+            }
+            else {
+                throw new ServletException("Unknown DispatchHandler type: " + dh.getClass().getName());
+            }
 
         }
     }
@@ -269,18 +276,12 @@ public class Squeak extends DispatchServlet {
                 if (Debug.isSet("probeRequest"))
                     _log.debug(ServletUtil.probeRequest(this, request));
 
-                PathInfo besPathInfo = besGetPathInfo(relativeUrl);
+                PathInfo besPathInfo = besGetPathInfo(relativeUrl);   // This call handles the caching
 
                 DispatchHandler dh = getDispatchHandler(request, besPathInfo);
                 if (dh != null) {
                     _log.debug("Request being handled by: " + dh.getClass().getName());
-
-                    if(dh instanceof DirectoryDispatchHandler){
-                        ((DirectoryDispatchHandler)dh).getLastModified_PathInfo(request,besPathInfo);
-                    }
-
-                    dh.handleRequest(request, response);
-
+                    dh.handleRequest(request, besPathInfo, response);
                 } else {
                     //send404(request,response);
                     throw  new OPeNDAPException(HttpServletResponse.SC_NOT_FOUND, "Failed to locate resource: "+relativeUrl);
@@ -319,74 +320,6 @@ public class Squeak extends DispatchServlet {
         Timer.reset();
     }
     //**************************************************************************
-
-
-
-    /*
-    private void send404(HttpServletRequest req, HttpServletResponse resp) throws Exception{
-
-        // Build a regex to use to see if they are looking for a DAP2 response:
-        StringBuilder dap2Regex = new StringBuilder(".*.(");
-        dap2Regex.append("dds");
-        dap2Regex.append("|das");
-        dap2Regex.append("|dods");
-        dap2Regex.append("|asc(ii)?");
-        dap2Regex.append(")");
-        Pattern dap2Pattern = Pattern.compile(dap2Regex.toString(),Pattern.CASE_INSENSITIVE);
-
-
-        // Build a regex to use to see if they are looking for a DAP3/4 response:
-        StringBuilder dap4Regex = new StringBuilder(".*.(");
-        dap4Regex.append("ddx");
-        dap4Regex.append("|dmr");
-        dap4Regex.append("|dap");
-        dap4Regex.append("|ddx");
-        dap4Regex.append("|rdf");
-        dap4Regex.append(")");
-        Pattern dap4Pattern = Pattern.compile(dap4Regex.toString(),Pattern.CASE_INSENSITIVE);
-
-
-        String requestURL = req.getRequestURL().toString();
-
-        if(dap2Pattern.matcher(requestURL).matches()){   // Is it a DAP2 request?
-            resp.setHeader("XDODS-Server", "dods/3.2");
-            resp.setHeader("XOPeNDAP-Server", "Server-Version-Unknown");
-            resp.setHeader("XDAP", "3.2");
-            resp.setHeader("Content-Description", "dods_error");
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            resp.getOutputStream().print(
-                    OPeNDAPException.getDap2Error(HttpServletResponse.SC_NOT_FOUND,
-                            "Cannot locate resource: " + Scrub.completeURL(requestURL)));
-        }
-        else if (dap4Pattern.matcher(requestURL).matches()){  // Is it a DAP3/4 request?
-            resp.setHeader("XDODS-Server", "dods/3.2");
-            resp.setHeader("XOPeNDAP-Server", "Server-Version-Unknown");
-            resp.setHeader("XDAP", "3.2");
-            resp.setHeader("Content-Description", "dods_error");
-            Document err = OPeNDAPException.getDAP32Error(
-                    HttpServletResponse.SC_NOT_FOUND,
-                    "Cannot locate resource: "+Scrub.completeURL(requestURL));
-
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
-            xmlo.output(err, resp.getOutputStream());
-
-        }
-        else { // Otherwise just send a web page.
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-        }
-
-
-
-
-        log.info("Sent Resource Not Found (404) - nothing left to check.");
-        LogUtil.logServerAccessEnd(HttpServletResponse.SC_NOT_FOUND, -1, "HyraxAccess");
-
-
-
-    }
-    */
-
 
 
     private boolean redirectForServiceOnlyRequest(HttpServletRequest req,
@@ -442,7 +375,7 @@ public class Squeak extends DispatchServlet {
                 DispatchHandler dh = getDispatchHandler(request,pi);
                 if (dh != null) {
                     _log.debug("Request being handled by: " + dh.getClass().getName());
-                    dh.handleRequest(request, response);
+                    dh.handleRequest(request, pi, response);
 
                 } else {
                     throw  new OPeNDAPException(HttpServletResponse.SC_NOT_FOUND, "Failed to locate resource: "+relativeUrl);
@@ -499,24 +432,15 @@ public class Squeak extends DispatchServlet {
 
         Procedure timedProcedure = Timer.start();
         try {
-
             if (ReqInfo.isServiceOnlyRequest(req)) {
                 return lmt;
             }
-
-
             if (!LicenseManager.isExpired(req) && !ReqInfo.isServiceOnlyRequest(req)) {
-                PathInfo besPathInfo = besGetPathInfo(req);
-
-                DispatchHandler dh = getDispatchHandler(req, besPathInfo);
+                PathInfo besPathInfo = besGetPathInfo(req); // This handles the use of the RequestCache
+                DispatchHandler dh = getDispatchHandler(req,besPathInfo);
                 if (dh != null) {
                     _log.debug("getLastModified() -  Request being handled by: " + dh.getClass().getName());
-                    if(dh instanceof DirectoryDispatchHandler){
-                        lmt = ((DirectoryDispatchHandler)dh).getLastModified_PathInfo(req,besPathInfo);
-                    }
-                    else {
-                        lmt = dh.getLastModified(req);
-                    }
+                    lmt = dh.getLastModified(besPathInfo);
                 }
             }
         } catch (Exception e) {
@@ -527,10 +451,7 @@ public class Squeak extends DispatchServlet {
             Timer.stop(timedProcedure);
 
         }
-
-
         return lmt;
-
     }
 
 
@@ -539,18 +460,11 @@ public class Squeak extends DispatchServlet {
 
         LogUtil.logServerShutdown("destroy()");
 
-
-        for(DispatchHandler dh : httpGetDispatchHandlers)
-            dh.destroy();
-
-        for(DispatchHandler dh : httpPostDispatchHandlers)
-            dh.destroy();
-
         super.destroy();
     }
 
 
-    private DispatchHandler getDispatchHandler(HttpServletRequest request,PathInfo pi)
+    private DispatchHandler getDispatchHandler(HttpServletRequest request, PathInfo pi)
             throws Exception {
         return getDispatchHandler_besInfo(request,pi);
 
@@ -576,65 +490,68 @@ public class Squeak extends DispatchServlet {
             return cachedDispatchHandler;
         }
 
+        String relativeUrl = ReqInfo.getLocalUrl(request);
         DispatchHandler dispatchHandler = null;
 
-        String relativeUrl = ReqInfo.getLocalUrl(request);
-        String remainder = besPathInfo.remainder();
-        String validPath = besPathInfo.validPath();
-
-        if(relativeUrl.startsWith("thredds")){
+        if(relativeUrl.startsWith("/thredds")){
             // Send to StaticCatalogDispatch
             dispatchHandler = _staticThreddsCatalogHandler;
         }
-        else if (relativeUrl.startsWith("gateway")){
+        else if (relativeUrl.startsWith("/gateway")){
             // Send to gateway.DispatchHandler
             dispatchHandler = _gatewayHandler;
         }
-        else if(remainder.isEmpty()){
-            // This is the easy part, no remainder. It's a simple file or directory in the BES.
-            if(besPathInfo.isFile()){
-                if(besPathInfo.isData()) {
-                    if(validPath.toLowerCase().endsWith(".ncml")){
-                        // Send to NcmlDatasetDispatcher  because NcML hack...
-                        dispatchHandler = _ncmlHandler;
+        else {
+//            PathInfo besPathInfo = besGetPathInfo(relativeUrl);
+            String remainder = besPathInfo.remainder();
+            String validPath = besPathInfo.validPath();
+
+            if(remainder.isEmpty()){
+                // This is the easy part, no remainder. It's a simple file or directory in the BES.
+                if(besPathInfo.isFile()){
+                    if(besPathInfo.isData()) {
+                        if(validPath.toLowerCase().endsWith(".ncml")){
+                            // Send to NcmlDatasetDispatcher  because NcML hack...
+                            dispatchHandler = _ncmlHandler;
+                        }
+                        else {
+                            // Send to BesDapDispatcher because data visibility is controlled there.
+                            dispatchHandler = _dapHandler;
+                        }
                     }
                     else {
-                        // Send to BesDapDispatcher because data visibility is controlled there.
-                        dispatchHandler = _dapHandler;
+                        // Send to FileDispatchHandler
+                        dispatchHandler = _fileHandler;
                     }
                 }
-                else {
-                    // Send to FileDispatchHandler
-                    dispatchHandler = _fileHandler;
+                else if(besPathInfo.isDir()){
+                    // Send to directory dispatcher.
+                    dispatchHandler =  _directoryHandler;
                 }
             }
-            else if(besPathInfo.isDir()){
-                // Send to directory dispatcher.
-                dispatchHandler =  _directoryHandler;
-            }
-        }
-        else {
-            // So there's a remainder. Now the fun begins.
-            _log.debug("remainder: {}", remainder);
-
-            if(remainder.equalsIgnoreCase("version") && validPath.equals("/")){
-                // VersionDispatch Handler
-                dispatchHandler = _versionHandler;
-            }
-            else if(remainder.endsWith("contents.html") ||
-                    remainder.endsWith("catalog.html") ||
-                    remainder.endsWith("/"))  {
-                dispatchHandler =  _directoryHandler;
-            }
-            else if( remainder.endsWith("catalog.xml")){
-                // Send to BESThreddsDispatchHandler
-                dispatchHandler =  _besThreddsHandler;
-            }
             else {
-                // Looks like DAP request - send to BesDapDispatcher
-                dispatchHandler =  _dapHandler;
-            }
+                // So there's a remainder. Now the fun begins.
+                _log.debug("remainder: {}", remainder);
 
+                if(remainder.equalsIgnoreCase("version") && validPath.equals("/")){
+                    // VersionDispatch Handler
+                    dispatchHandler = _versionHandler;
+                }
+                else if(remainder.endsWith("contents.html") ||
+                        remainder.endsWith("catalog.html") ||
+                        remainder.endsWith("/"))  {
+                    dispatchHandler =  _directoryHandler;
+                }
+                else if( remainder.endsWith("catalog.xml")){
+                    // Send to BESThreddsDispatchHandler
+                    dispatchHandler =  _besThreddsHandler;
+                }
+                else {
+                    // Looks like DAP request - send to BesDapDispatcher
+                    dispatchHandler =  _dapHandler;
+                }
+
+            }
         }
 
         if(dispatchHandler!=null)

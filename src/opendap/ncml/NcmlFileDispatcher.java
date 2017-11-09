@@ -25,14 +25,12 @@
  */
 package opendap.ncml;
 
-import opendap.bes.BESError;
-import opendap.bes.BESResource;
-import opendap.bes.BadConfigurationException;
+import opendap.bes.*;
 import opendap.bes.dap2Responders.BesApi;
-import opendap.bes.BesDapDispatcher;
 import opendap.bes.dap4Responders.MediaType;
 import opendap.coreServlet.ReqInfo;
 import opendap.coreServlet.ResourceInfo;
+import opendap.coreServlet.Squeak;
 import opendap.http.mediaTypes.TextXml;
 import opendap.io.HyraxStringEncoding;
 import opendap.ppt.PPTException;
@@ -81,7 +79,7 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
 
 
 
-
+    @Override
     public void init(HttpServlet servlet,Element config) throws Exception {
 
         if(initialized) return;
@@ -98,23 +96,58 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
 
     }
 
-    public boolean requestCanBeHandled(HttpServletRequest request)
+    /**
+     *
+     * @param request The request to be handled.
+     * @param pi
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception {
-        return ncmlDispatch(request, null, false);
+
+        boolean canDo = pi.remainder().isEmpty() && // No remainder
+                        ncmlRequestPattern.matcher(pi.validPath()).matches() && // Matches ncml naming scheme
+                        pi.isData() && // It looks to be a dataset.
+                        BesDapDispatcher.allowDirectDataSourceAccess(); // The configuration allows access.
+
+        return canDo;
 
     }
 
 
+    /*
     public void handleRequest(HttpServletRequest request,
                               HttpServletResponse response)
             throws Exception {
 
-       if(!ncmlDispatch(request, response, true))
-           log.debug("FileDispatch request failed inexplicably!");
+        if(!ncmlDispatch(request, Squeak.besGetPathInfo(request), response, true))
+            log.debug("FileDispatch request failed inexplicably!");
+
+    }
+    */
+
+    /**
+     *
+     * @param request The request to be handled.
+     * @param pi
+     * @param response The response object into which the response information
+     * will be placed.
+     * @throws Exception
+     */
+    @Override
+    public void handleRequest(HttpServletRequest request,
+                              PathInfo pi,
+                              HttpServletResponse response)
+            throws Exception {
+
+        sendNcmlResponse(request, response);
 
     }
 
 
+    /*
     public long getLastModified(HttpServletRequest req) {
 
         String name = ReqInfo.getLocalUrl(req);
@@ -135,9 +168,22 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
 
 
     }
+    */
 
+    /**
+     *
+     * @param pi
+     * @return
+     */
+    @Override
+    public long getLastModified(PathInfo pi) {
+        return pi.lastModified().getTime();
+    }
 
-
+    /**
+     *
+     */
+    @Override
     public void destroy() {
         log.info("Destroy complete.");
 
@@ -155,31 +201,24 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
      *         otherwise.
      * @throws Exception .
      */
+    /*
     private boolean ncmlDispatch(HttpServletRequest request,
+                                 PathInfo pi,
                                  HttpServletResponse response,
                                  boolean sendResponse) throws Exception {
 
-
-        String requestURL = request.getRequestURL().toString();
-
         boolean isNcmlRequest = false;
-
-        if(ncmlRequestPattern.matcher(requestURL).matches())   {
-            String relativeUrl = ReqInfo.getLocalUrl(request);
-            ResourceInfo dsi = new BESResource(relativeUrl,_besApi);
-
-            if (dsi.sourceExists() && dsi.isDataset() && BesDapDispatcher.allowDirectDataSourceAccess()) {
+        if(ncmlRequestPattern.matcher(pi.validPath()).matches())   {
+            if ( pi.isData() && BesDapDispatcher.allowDirectDataSourceAccess()) {
                 isNcmlRequest = true;
                 if (sendResponse) {
                     sendNcmlResponse(request, response);
                 }
             }
-
         }
-
         return isNcmlRequest;
-
     }
+    */
 
 
     /**
@@ -192,25 +231,12 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
                                   HttpServletResponse response)
             throws Exception {
 
-
-
-
         String serviceUrl = ReqInfo.getFullServiceContext(request);
-
-
         String name = ReqInfo.getLocalUrl(request);
-
-
         Document ncml = getNcmlDocument(name);
-
         String besPrefix = _besApi.getBESprefix(name);
-
         String location;
         Element e;
-
-
-
-
 
         Iterator i = ncml.getDescendants(new ElementFilter());
         while(i.hasNext()){
@@ -223,19 +249,10 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
                 e.setAttribute("location",location);
             }
         }
-
-
-
         XMLOutputter xmlo = new XMLOutputter();
-
-
         MediaType responseMediaType = new TextXml();
         response.setContentType(responseMediaType.getMimeType());
-
         xmlo.output(ncml,response.getOutputStream());
-
-
-
     }
 
 
@@ -243,19 +260,12 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
             throws BESError, IOException, BadConfigurationException, PPTException, JDOMException {
 
         SAXBuilder sb = new SAXBuilder();
-
         Document ncmlDocument;
-
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
         _besApi.writeFile(name, baos);
-
         ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
-
         ncmlDocument = sb.build(is);
-
         return ncmlDocument;
-
     }
 
 

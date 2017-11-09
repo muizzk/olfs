@@ -28,6 +28,7 @@ package opendap.wcs.v2_0.http;
 
 import net.sf.saxon.s9api.XdmNode;
 import opendap.PathBuilder;
+import opendap.bes.PathInfo;
 import opendap.coreServlet.ReqInfo;
 import opendap.coreServlet.Scrub;
 import opendap.coreServlet.ServletUtil;
@@ -89,6 +90,7 @@ public class HttpGetHandler implements opendap.coreServlet.DispatchHandler {
 
     }
 
+    @Override
     public void init(HttpServlet dispatchServlet, Element e) throws ServletException {
 
         init(dispatchServlet);
@@ -133,18 +135,37 @@ public class HttpGetHandler implements opendap.coreServlet.DispatchHandler {
     }
 
 
-
-
-    public boolean requestCanBeHandled(HttpServletRequest request) throws Exception {
+    /**
+     *
+     * @param request The request to be handled.
+     * @param pi  The BES PathInfo object for the request. (Ignored in this implementation, so it may be null)
+     * @return  True if the request can be handled, false itherwise
+     * @throws Exception
+     */
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi ) throws Exception {
         return wcsRequestDispatch(request, null, false);
     }
 
-
+    /*
     public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
         wcsRequestDispatch(request, response, true);
     }
+    */
 
+
+    @Override
+    public void handleRequest(HttpServletRequest request, PathInfo pi, HttpServletResponse response) throws Exception {
+        wcsRequestDispatch(request, response, true);
+    }
+    /*
     public long getLastModified(HttpServletRequest req) {
+        return WcsServiceManager.getLastModified();
+    }
+    */
+
+
+    @Override public long getLastModified(PathInfo pi) {
         return WcsServiceManager.getLastModified();
     }
 

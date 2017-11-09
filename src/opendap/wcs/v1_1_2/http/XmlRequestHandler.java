@@ -25,6 +25,7 @@
  */
 package opendap.wcs.v1_1_2.http;
 
+import opendap.bes.PathInfo;
 import opendap.coreServlet.ReqInfo;
 import opendap.wcs.v1_1_2.*;
 import org.jdom.Document;
@@ -66,6 +67,7 @@ public class XmlRequestHandler implements opendap.coreServlet.DispatchHandler, W
         log = org.slf4j.LoggerFactory.getLogger(getClass());
     }
 
+    @Override
     public void init(HttpServlet servlet, Element config) throws Exception {
         if (_initialized) return;
 
@@ -100,19 +102,33 @@ public class XmlRequestHandler implements opendap.coreServlet.DispatchHandler, W
 
 
 
-    public boolean requestCanBeHandled(HttpServletRequest request) throws Exception {
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi) throws Exception {
         return wcsRequestDispatch(request, null, false);
     }
 
-
+    /*
     public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
         wcsRequestDispatch(request, response, true);
     }
+    */
 
+    @Override
+    public void handleRequest(HttpServletRequest request, PathInfo pi, HttpServletResponse response) throws Exception {
+        wcsRequestDispatch(request, response, true);
+    }
+
+    /*
     public long getLastModified(HttpServletRequest req) {
         return -1;
     }
+    */
 
+    @Override
+    public long getLastModified(PathInfo pi) { return -1;  }
+
+
+    @Override
     public void destroy() {
 
     }

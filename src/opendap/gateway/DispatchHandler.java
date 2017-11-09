@@ -26,21 +26,29 @@
 
 package opendap.gateway;
 
+import opendap.bes.BESError;
+import opendap.bes.BadConfigurationException;
 import opendap.bes.BesDapDispatcher;
+import opendap.bes.PathInfo;
 import opendap.coreServlet.ReqInfo;
+import opendap.coreServlet.Squeak;
 import opendap.coreServlet.Util;
+import opendap.ppt.PPTException;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Vector;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -88,60 +96,86 @@ public class DispatchHandler extends BesDapDispatcher {
         _gatewayForm  =  new GatewayForm(getSystemPath(), _prefix);
     }
 
+
+
+
     @Override
-    public boolean requestDispatch(HttpServletRequest request,
-                                   HttpServletResponse response,
-                                   boolean sendResponse)
-            throws Exception {
-
-
-        String relativeURL = ReqInfo.getLocalUrl(request);
-
-
-        log.debug("relativeURL:    "+relativeURL);
-
-
-
-        if(relativeURL.startsWith("/"))
-            relativeURL = relativeURL.substring(1,relativeURL.length());
-
-
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi){
         boolean isMyRequest = false;
-        boolean itsJustThePrefixWithoutTheSlash = _prefix.substring(0,_prefix.lastIndexOf("/")).equals(relativeURL);
-        boolean itsJustThePrefix = _prefix.equals(relativeURL);
 
+        String relativeURL = pi.path();
+        log.debug("relativeURL:    "+relativeURL);
         if (relativeURL != null) {
+            while(relativeURL.startsWith("/") && relativeURL.length()>1)
+                relativeURL = relativeURL.substring(1,relativeURL.length());
 
+            boolean itsJustThePrefixWithoutTheSlash =
+                    _prefix.substring(0,_prefix.lastIndexOf("/")).equals(relativeURL);
+            
             if (relativeURL.startsWith(_prefix) || itsJustThePrefixWithoutTheSlash ) {
                 isMyRequest = true;
+            }
+        }
+        return isMyRequest;
+    }
 
-                if (sendResponse) {
-                    log.info("Sending Gateway Response");
+    @Override
+    public void handleRequest(
+            HttpServletRequest request,
+            PathInfo pi,
+            HttpServletResponse response)
+        throws Exception {
 
-                    if(itsJustThePrefixWithoutTheSlash){
-                        response.sendRedirect(_prefix);
-                        log.debug("Sent redirect to service prefix: "+_prefix);
-                    }
-                    else if(itsJustThePrefix){
+        log.info("Sending Gateway Response");
+        String relativeURL = pi.path();
+        log.debug("relativeURL:    "+relativeURL);
+        if (relativeURL != null) {
+            while (relativeURL.startsWith("/") && relativeURL.length() > 1)
+                relativeURL = relativeURL.substring(1, relativeURL.length());
 
-                        _gatewayForm.respondToHttpGetRequest(request,response);
-                        log.info("Sent Gateway Access Form");
+            boolean itsJustThePrefixWithoutTheSlash =
+                    _prefix.substring(0, _prefix.lastIndexOf("/")).equals(relativeURL);
 
-                    }
-                    else {
-                        if(!super.requestDispatch(request,response, true)  && !response.isCommitted()){
-                            response.sendError(HttpServletResponse.SC_NOT_FOUND,"Unable to locate requested resource.");
-                            log.info("Sent 404 Response.");
-                        }
-                        else
-                            log.info("Sent DAP Gateway Response.");
-                    }
-                }
+            boolean itsJustThePrefix = _prefix.equals(relativeURL);
 
+            if (itsJustThePrefixWithoutTheSlash) {
+                response.sendRedirect(_prefix);
+                log.debug("Sent redirect to service prefix: " + _prefix);
+            } else if (itsJustThePrefix) {
+
+                _gatewayForm.respondToHttpGetRequest(request, response);
+                log.info("Sent Gateway Access Form");
+
+            } else {
+                if (!super.requestDispatch(request, pi, response, true) && !response.isCommitted()) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unable to locate requested resource.");
+                    log.info("Sent 404 Response.");
+                } else
+                    log.info("Sent DAP Gateway Response.");
             }
         }
 
-        return isMyRequest;
+    }
+
+    @Override
+    public long getLastModified(PathInfo pi){
+
+        //String encodedResourceId = stripPrefix(pi.path());
+        
+        String resourceId = _besApi.getBesDataSourceID(pi.path(), BesGatewayApi.stripDotSuffixPattern,false);
+
+        long lmt = -1;
+        try {
+            pi = Squeak.besGetPathInfo(resourceId);
+            lmt = pi.lastModified().getTime();
+        } catch (IOException | BadConfigurationException | PPTException | JDOMException | BESError e) {
+            String msg = "Failed to get PathInfo for a gateway ID of '"+resourceId+"' ";
+            msg += "Caught "+e.getClass().getName()+" message: "+e.getMessage();
+            log.error(msg);
+        }
+
+        return lmt;
+
     }
 
 
@@ -228,6 +262,15 @@ public class DispatchHandler extends BesDapDispatcher {
     }
 
     String stripPrefix(String dataSource){
+
+        if(_prefix.startsWith("/")) {
+            if (!dataSource.startsWith("/"))
+                dataSource = "/" + dataSource;
+        }
+        else {
+            while(dataSource.startsWith("/") && dataSource.length()>1)
+                dataSource = dataSource.substring(1);
+        }
 
         if(dataSource.startsWith(_prefix))
             return dataSource.substring(_prefix.length(),dataSource.length());
