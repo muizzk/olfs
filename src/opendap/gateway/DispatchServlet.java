@@ -161,18 +161,6 @@ public class DispatchServlet extends HttpServlet {
     }
 
 
-    class GatewayPathInfo extends PathInfo {
-        GatewayPathInfo(){
-            super();
-        }
-        GatewayPathInfo(HttpServletRequest req){
-            this();
-            _path = ReqInfo.getLocalUrl(req);  // FIXME! MAKE SURE THIS WORKS! MAY NEED TO POPULATE OTHER VALUES!
-            _isFile = true;
-            _isData = true;
-        }
-    }
-
     /**
      * Gets the last modified date of the requested resource. Because the data handler is really
      * the only entity capable of determining the last modified date the job is passed  through to it.

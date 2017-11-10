@@ -122,12 +122,19 @@ public class DispatchHandler extends BesDapDispatcher {
     @Override
     public void handleRequest(
             HttpServletRequest request,
-            PathInfo pi,
+            PathInfo pi,  // unused
             HttpServletResponse response)
         throws Exception {
 
+        GatewayPathInfo gpi = new GatewayPathInfo(request);
+        if(gpi.path().contains(".")){
+            String remainder =  gpi.path().substring(gpi.path().indexOf("."));
+            gpi.setRemainder(remainder);
+        }
+
         log.info("Sending Gateway Response");
-        String relativeURL = pi.path();
+        String relativeURL = gpi.path();
+
         log.debug("relativeURL:    "+relativeURL);
         if (relativeURL != null) {
             while (relativeURL.startsWith("/") && relativeURL.length() > 1)
@@ -147,7 +154,8 @@ public class DispatchHandler extends BesDapDispatcher {
                 log.info("Sent Gateway Access Form");
 
             } else {
-                if (!super.requestDispatch(request, pi, response, true) && !response.isCommitted()) {
+
+                if (!super.requestDispatch(request, gpi, response, true) && !response.isCommitted()) {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unable to locate requested resource.");
                     log.info("Sent 404 Response.");
                 } else
@@ -160,9 +168,14 @@ public class DispatchHandler extends BesDapDispatcher {
     @Override
     public long getLastModified(PathInfo pi){
 
-        //String encodedResourceId = stripPrefix(pi.path());
-        
         String resourceId = _besApi.getBesDataSourceID(pi.path(), BesGatewayApi.stripDotSuffixPattern,false);
+
+        ////////////////////////////////////////////////////////////////////////////////////////
+        // THIS IS A HACK TO MAKE THIS WORK WITHOUT A GATEWAY SPECIFIC showPathInfo command.
+        String localhost = "http://localhost:8080/opendap";
+        if(resourceId.startsWith(localhost))
+            resourceId = resourceId.substring(localhost.length());
+        ////////////////////////////////////////////////////////////////////////////////////////
 
         long lmt = -1;
         try {
@@ -196,31 +209,23 @@ public class DispatchHandler extends BesDapDispatcher {
                     " did not provide 1 or more <wcsHost> " +
                     "child elements to limit the WCS services that " +
                     "may be accessed. This not recomended.";
-
             log.warn(msg);
         }
         else {
-
             for (Object o : hosts) {
                 hostElem = (Element) o;
                 String host = hostElem.getTextTrim();
-
                 url = new URL(host);
                 log.debug(Util.urlInfo(url));
-
-
                 uri = new URI(host);
                 log.debug(Util.uriInfo(uri));
-
                 log.info("Adding " + url + " to allowed hosts list.");
                 trustedHosts.add(host);
             }
-
         }
     }
 
     private boolean isTrustedHost(String url){
-
         for(String trustedHost : trustedHosts){
             if(url.startsWith(trustedHost))
                 return true;
@@ -230,12 +235,8 @@ public class DispatchHandler extends BesDapDispatcher {
 
 
     private void ingestPrefix(Element config) throws Exception {
-
-
         if (config != null) {
-
             String msg;
-
             Element e = config.getChild("prefix");
             if (e != null)
                 _prefix = e.getTextTrim();
@@ -248,21 +249,16 @@ public class DispatchHandler extends BesDapDispatcher {
                 log.error(msg);
                 throw new Exception(msg);
             }
-
-
             if (!_prefix.endsWith("/"))
                 _prefix += "/";
 
             if (_prefix.startsWith("/"))
                 _prefix = _prefix.substring(1);
-
         }
         log.info("Using prefix=" + _prefix);
-
     }
 
     String stripPrefix(String dataSource){
-
         if(_prefix.startsWith("/")) {
             if (!dataSource.startsWith("/"))
                 dataSource = "/" + dataSource;
@@ -271,12 +267,10 @@ public class DispatchHandler extends BesDapDispatcher {
             while(dataSource.startsWith("/") && dataSource.length()>1)
                 dataSource = dataSource.substring(1);
         }
-
         if(dataSource.startsWith(_prefix))
             return dataSource.substring(_prefix.length(),dataSource.length());
 
         return dataSource;
-
     }
 
 
