@@ -122,20 +122,16 @@ public class DispatchHandler extends BesDapDispatcher {
     @Override
     public void handleRequest(
             HttpServletRequest request,
-            PathInfo pi,  // unused
+            PathInfo pi,
             HttpServletResponse response)
         throws Exception {
 
-        GatewayPathInfo gpi = new GatewayPathInfo(request);
-        if(gpi.path().contains(".")){
-            String remainder =  gpi.path().substring(gpi.path().indexOf("."));
-            gpi.setRemainder(remainder);
-        }
+        log.debug("handleRequest() - pi is an instance of {}",pi.getClass().getName());
 
-        log.info("Sending Gateway Response");
-        String relativeURL = gpi.path();
+        log.info("handleRequest() - Sending Gateway Response");
+        String relativeURL = pi.path();
 
-        log.debug("relativeURL:    "+relativeURL);
+        log.debug("handleRequest() - relativeURL:    "+relativeURL);
         if (relativeURL != null) {
             while (relativeURL.startsWith("/") && relativeURL.length() > 1)
                 relativeURL = relativeURL.substring(1, relativeURL.length());
@@ -147,22 +143,28 @@ public class DispatchHandler extends BesDapDispatcher {
 
             if (itsJustThePrefixWithoutTheSlash) {
                 response.sendRedirect(_prefix);
-                log.debug("Sent redirect to service prefix: " + _prefix);
+                log.debug("handleRequest() - Sent redirect to service prefix: " + _prefix);
             } else if (itsJustThePrefix) {
 
                 _gatewayForm.respondToHttpGetRequest(request, response);
-                log.info("Sent Gateway Access Form");
+                log.info("handleRequest() - Sent Gateway Access Form");
 
             } else {
-
+                GatewayPathInfo gpi = new GatewayPathInfo( pi.path(), _besApi);
                 if (!super.requestDispatch(request, gpi, response, true) && !response.isCommitted()) {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unable to locate requested resource.");
-                    log.info("Sent 404 Response.");
+                    log.info("handleRequest() - Sent 404 Response.");
                 } else
-                    log.info("Sent DAP Gateway Response.");
+                    log.info("handleRequest() - Sent DAP Gateway Response.");
             }
         }
 
+    }
+
+
+    public GatewayPathInfo getGateWayPathInfo(HttpServletRequest req){
+        GatewayPathInfo pi = new GatewayPathInfo(req,_besApi);
+        return pi;
     }
 
     @Override

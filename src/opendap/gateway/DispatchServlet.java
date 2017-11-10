@@ -169,6 +169,7 @@ public class DispatchServlet extends HttpServlet {
      * @return Returns the time the HttpServletRequest object was last modified, in milliseconds
      *         since midnight January 1, 1970 GMT
      */
+    @Override
     protected long getLastModified(HttpServletRequest req) {
 
         RequestCache.openThreadCache();
@@ -179,8 +180,9 @@ public class DispatchServlet extends HttpServlet {
 
             if (ReqInfo.isServiceOnlyRequest(req))
                 return -1;
-            PathInfo pi = new GatewayPathInfo(req);
-            return _gatewayDispatchHandler.getLastModified(pi);
+
+            GatewayPathInfo gpi = _gatewayDispatchHandler.getGateWayPathInfo(req);
+            return _gatewayDispatchHandler.getLastModified(gpi);
 
 
         }
@@ -205,6 +207,7 @@ public class DispatchServlet extends HttpServlet {
 
 
 
+    @Override
     public void doGet(HttpServletRequest request,
                       HttpServletResponse response) {
 
@@ -216,7 +219,7 @@ public class DispatchServlet extends HttpServlet {
 
             if (!redirect(request, response)) {
 
-                GatewayPathInfo gpi = new GatewayPathInfo(request);
+                GatewayPathInfo gpi = _gatewayDispatchHandler.getGateWayPathInfo(request);
                 if(!_gatewayDispatchHandler.requestDispatch(request, gpi, response,true)){
                     if(!response.isCommitted()){
                         log.info("Sent BAD URL - not an OPeNDAP request suffix.");

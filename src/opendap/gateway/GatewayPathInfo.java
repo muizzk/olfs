@@ -33,16 +33,38 @@ import opendap.coreServlet.ReqInfo;
 import javax.servlet.http.HttpServletRequest;
 
 class GatewayPathInfo extends PathInfo {
+    BesGatewayApi _besApi;
     GatewayPathInfo(){
         super();
     }
 
-    GatewayPathInfo(HttpServletRequest req){
+    GatewayPathInfo(HttpServletRequest req, BesGatewayApi besApi){
+        this(ReqInfo.getLocalUrl(req),besApi);
+    }
+
+    
+    GatewayPathInfo(String path, BesGatewayApi besApi){
         this();
-        _path = ReqInfo.getLocalUrl(req);  // FIXME! MAKE SURE THIS WORKS! MAY NEED TO POPULATE OTHER VALUES!
+        _besApi = besApi;
+        // FIXME! MAKE SURE THIS WORKS! MAY NEED TO POPULATE OTHER VALUES!
+        _path =  _besApi.getBesDataSourceID(path, BesGatewayApi.stripDotSuffixPattern,false);
+
+        ////////////////////////////////////////////////////////////////////////////////////////
+        // THIS IS A HACK TO MAKE THIS WORK WITHOUT A GATEWAY SPECIFIC showPathInfo BES command.
+        String localhost = "http://localhost:8080/opendap";
+        if(_path.startsWith(localhost))
+            _path = _path.substring(localhost.length());
+        ////////////////////////////////////////////////////////////////////////////////////////
+
+        _remainder = "";
+        if(path.contains("."))
+            _remainder = path.substring(path.indexOf('.'));
+
         _isFile = true;
         _isData = true;
     }
+
+
     public void setRemainder(String r){
         _remainder = r;
     }
