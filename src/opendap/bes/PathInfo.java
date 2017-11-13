@@ -27,6 +27,7 @@
 package opendap.bes;
 
 import opendap.bes.dap2Responders.BesApi;
+import opendap.coreServlet.DispatchHandler;
 import opendap.namespaces.BES;
 import org.jdom.Element;
 
@@ -61,7 +62,6 @@ public class PathInfo {
     protected boolean _canAccess;
     protected Date _lmt;
     protected long _size;
-
 
     protected PathInfo(){
 

@@ -32,18 +32,18 @@ import opendap.coreServlet.ReqInfo;
 
 import javax.servlet.http.HttpServletRequest;
 
-class GatewayPathInfo extends PathInfo {
+public class GatewayPathInfo extends PathInfo {
     BesGatewayApi _besApi;
     GatewayPathInfo(){
         super();
     }
 
-    GatewayPathInfo(HttpServletRequest req, BesGatewayApi besApi){
+    public GatewayPathInfo(HttpServletRequest req, BesGatewayApi besApi){
         this(ReqInfo.getLocalUrl(req),besApi);
     }
 
     
-    GatewayPathInfo(String path, BesGatewayApi besApi){
+    public GatewayPathInfo(String path, BesGatewayApi besApi){
         this();
         _besApi = besApi;
         // FIXME! MAKE SURE THIS WORKS! MAY NEED TO POPULATE OTHER VALUES!
@@ -68,4 +68,5 @@ class GatewayPathInfo extends PathInfo {
     public void setRemainder(String r){
         _remainder = r;
     }
+
 }

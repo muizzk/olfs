@@ -53,6 +53,7 @@ import opendap.logging.Timer;
 import opendap.ncml.NcmlDatasetDispatcher;
 import opendap.ppt.PPTException;
 import opendap.threddsHandler.StaticCatalogDispatch;
+import opendap.gateway.GatewayPathInfo;
 
 /**
  * This servlet provides the dispatching for all OPeNDAP requests.
@@ -183,13 +184,6 @@ public class Squeak extends DispatchServlet {
     }
 
 
-    public static PathInfo besGetPathInfo(HttpServletRequest request)
-            throws JDOMException, BadConfigurationException, PPTException, BESError, IOException {
-        String relativeUrl = ReqInfo.getLocalUrl(request);
-        return besGetPathInfo(relativeUrl);
-    }
-
-
     public static PathInfo besGetPathInfo(String resourcePath)
             throws JDOMException, BadConfigurationException, PPTException, BESError, IOException {
 
@@ -276,12 +270,12 @@ public class Squeak extends DispatchServlet {
                 if (Debug.isSet("probeRequest"))
                     _log.debug(ServletUtil.probeRequest(this, request));
 
-                PathInfo besPathInfo = besGetPathInfo(relativeUrl);   // This call handles the caching
-
-                DispatchHandler dh = getDispatchHandler(request, besPathInfo);
-                if (dh != null) {
-                    _log.debug("Request being handled by: " + dh.getClass().getName());
-                    dh.handleRequest(request, besPathInfo, response);
+                gdhParams gdhp = new gdhParams();
+                gdhp.request = request;
+                getDispatchHandler(gdhp);
+                if (gdhp.dispatchHandler != null) {
+                    _log.debug("Request being handled by: " + gdhp.dispatchHandler.getClass().getName());
+                    gdhp.dispatchHandler.handleRequest(request, gdhp.pathInfo, response);
                 } else {
                     //send404(request,response);
                     throw  new OPeNDAPException(HttpServletResponse.SC_NOT_FOUND, "Failed to locate resource: "+relativeUrl);
@@ -371,13 +365,14 @@ public class Squeak extends DispatchServlet {
                 if (Debug.isSet("probeRequest"))
                     _log.debug(ServletUtil.probeRequest(this, request));
 
-                PathInfo pi = besGetPathInfo(relativeUrl);
-                DispatchHandler dh = getDispatchHandler(request,pi);
-                if (dh != null) {
-                    _log.debug("Request being handled by: " + dh.getClass().getName());
-                    dh.handleRequest(request, pi, response);
-
+                gdhParams gdhp = new gdhParams();
+                gdhp.request = request;
+                getDispatchHandler(gdhp);
+                if (gdhp.dispatchHandler != null) {
+                    _log.debug("Request being handled by: " + gdhp.dispatchHandler.getClass().getName());
+                    gdhp.dispatchHandler.handleRequest(request, gdhp.pathInfo, response);
                 } else {
+                    //send404(request,response);
                     throw  new OPeNDAPException(HttpServletResponse.SC_NOT_FOUND, "Failed to locate resource: "+relativeUrl);
                 }
 
@@ -436,11 +431,17 @@ public class Squeak extends DispatchServlet {
                 return lmt;
             }
             if (!LicenseManager.isExpired(req) && !ReqInfo.isServiceOnlyRequest(req)) {
-                PathInfo besPathInfo = besGetPathInfo(req); // This handles the use of the RequestCache
-                DispatchHandler dh = getDispatchHandler(req,besPathInfo);
-                if (dh != null) {
-                    _log.debug("getLastModified() -  Request being handled by: " + dh.getClass().getName());
-                    lmt = dh.getLastModified(besPathInfo);
+                String relativeUrl = ReqInfo.getLocalUrl(req);
+
+                gdhParams gdhp = new gdhParams();
+                gdhp.request = req;
+                getDispatchHandler(gdhp);
+                if (gdhp.dispatchHandler != null) {
+                    _log.debug("Request being handled by: " + gdhp.dispatchHandler.getClass().getName());
+                    gdhp.dispatchHandler.getLastModified(gdhp.pathInfo);
+                } else {
+                    //send404(request,response);
+                    throw  new OPeNDAPException(HttpServletResponse.SC_NOT_FOUND, "Failed to locate resource: "+relativeUrl);
                 }
             }
         } catch (Exception e) {
@@ -463,10 +464,16 @@ public class Squeak extends DispatchServlet {
         super.destroy();
     }
 
+    class gdhParams {
+        HttpServletRequest request;
+        PathInfo pathInfo;
+        DispatchHandler dispatchHandler;
 
-    private DispatchHandler getDispatchHandler(HttpServletRequest request, PathInfo pi)
+    }
+
+    private void getDispatchHandler(gdhParams gdhP)
             throws Exception {
-        return getDispatchHandler_besInfo(request,pi);
+         getDispatchHandler_besInfo(gdhP);
 
     }
 
@@ -476,57 +483,64 @@ public class Squeak extends DispatchServlet {
      * Returns the first handler in the vector of DispatchHandlers that claims
      * be able to handle the incoming request.
      *
-     * @param request The request we are looking to handle
+     * @param gdhP The request we are looking to handle
      * @return The IsoDispatchHandler that can handle the request, null if no
      *         handler claims the request.
      * @throws Exception For bad behaviour.
      */
-    private DispatchHandler
-    getDispatchHandler_besInfo(HttpServletRequest request, PathInfo besPathInfo) throws Exception {
+    private void
+    getDispatchHandler_besInfo(gdhParams gdhP) throws Exception {
 
         String dispatchHandlerKey = getClass().getName()+"getDispatchHandler()";
-        DispatchHandler cachedDispatchHandler  = (DispatchHandler)RequestCache.get(dispatchHandlerKey);
-        if(cachedDispatchHandler!=null) {
-            return cachedDispatchHandler;
+        gdhParams cachedResult  = (gdhParams)RequestCache.get(dispatchHandlerKey);
+        if(cachedResult!=null) {
+            gdhP.dispatchHandler = cachedResult.dispatchHandler;
+            gdhP.pathInfo = cachedResult.pathInfo;
+            return;
         }
 
-        String relativeUrl = ReqInfo.getLocalUrl(request);
-        DispatchHandler dispatchHandler = null;
+        String relativeUrl = ReqInfo.getLocalUrl(gdhP.request);
+        // DispatchHandler dispatchHandler = null;
 
-        if(relativeUrl.startsWith("/thredds")){
-            // Send to StaticCatalogDispatch
-            dispatchHandler = _staticThreddsCatalogHandler;
-        }
-        else if (relativeUrl.startsWith("/gateway")){
+        if (relativeUrl.startsWith("/gateway")){
             // Send to gateway.DispatchHandler
-            dispatchHandler = _gatewayHandler;
+            gdhP.dispatchHandler = _gatewayHandler;
+            // And since Gateway only uses the BES to service remote resources
+            // rather than files on the BES filesystem the PathInfo object
+            // has to have a special implementation to support this difference.
+            gdhP.pathInfo = new GatewayPathInfo(relativeUrl, _gatewayHandler.getBesGatewayApi());
         }
         else {
-//            PathInfo besPathInfo = besGetPathInfo(relativeUrl);
+            PathInfo besPathInfo = besGetPathInfo(relativeUrl); // This handles the use of the RequestCache
             String remainder = besPathInfo.remainder();
             String validPath = besPathInfo.validPath();
+            gdhP.pathInfo = besPathInfo;
 
-            if(remainder.isEmpty()){
+            if(relativeUrl.startsWith("/thredds")){
+                // Send to StaticCatalogDispatch
+                gdhP.dispatchHandler = _staticThreddsCatalogHandler;
+            }
+            else  if(remainder.isEmpty()){
                 // This is the easy part, no remainder. It's a simple file or directory in the BES.
                 if(besPathInfo.isFile()){
                     if(besPathInfo.isData()) {
                         if(validPath.toLowerCase().endsWith(".ncml")){
                             // Send to NcmlDatasetDispatcher  because NcML hack...
-                            dispatchHandler = _ncmlHandler;
+                            gdhP.dispatchHandler = _ncmlHandler;
                         }
                         else {
                             // Send to BesDapDispatcher because data visibility is controlled there.
-                            dispatchHandler = _dapHandler;
+                            gdhP.dispatchHandler = _dapHandler;
                         }
                     }
                     else {
                         // Send to FileDispatchHandler
-                        dispatchHandler = _fileHandler;
+                        gdhP.dispatchHandler = _fileHandler;
                     }
                 }
                 else if(besPathInfo.isDir()){
                     // Send to directory dispatcher.
-                    dispatchHandler =  _directoryHandler;
+                    gdhP.dispatchHandler =  _directoryHandler;
                 }
             }
             else {
@@ -535,33 +549,41 @@ public class Squeak extends DispatchServlet {
 
                 if(remainder.equalsIgnoreCase("version") && validPath.equals("/")){
                     // VersionDispatch Handler
-                    dispatchHandler = _versionHandler;
+                    gdhP.dispatchHandler = _versionHandler;
                 }
                 else if(remainder.endsWith("contents.html") ||
                         remainder.endsWith("catalog.html") ||
                         remainder.endsWith("/"))  {
-                    dispatchHandler =  _directoryHandler;
+                    gdhP.dispatchHandler =  _directoryHandler;
                 }
                 else if( remainder.endsWith("catalog.xml")){
                     // Send to BESThreddsDispatchHandler
-                    dispatchHandler =  _besThreddsHandler;
+                    gdhP.dispatchHandler =  _besThreddsHandler;
                 }
                 else {
                     // Looks like DAP request - send to BesDapDispatcher
-                    dispatchHandler =  _dapHandler;
+                    gdhP.dispatchHandler =  _dapHandler;
                 }
 
             }
         }
 
-        if(dispatchHandler!=null)
-            RequestCache.put(dispatchHandlerKey,dispatchHandler);
+        RequestCache.put(dispatchHandlerKey,gdhP);
 
-        return dispatchHandler;
+
     }
 
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // THis next bit was an attempt to perform dispatch using only regex. There are issues....
+    //
+    //
 
+
+/*
     String DAP2_REQUEST_REGEX = "^.*\\.(dds|das|dods|ascii|html|rdf|info|csv|tiff|jp2|json|iso|rubric)$";
     String DAP4_REQUEST_REGEX = "^.*\\.(file|dsr(\\.(xml|html)?)|dmr(\\.(xml|html|json|rdf|iso|rubric))?|dap(\\.(json|csv|tiff|jp2|nc|nc4|xml)?))$";
     String DAP_REQUEST_MATCH_REGEX = "(" + DAP2_REQUEST_REGEX + "|" + DAP4_REQUEST_REGEX + ")";
@@ -570,15 +592,6 @@ public class Squeak extends DispatchServlet {
         return DapRequestPattern.matcher(path).matches();
     }
 
-    /**
-     * Returns the first handler in the vector of DispatchHandlers that claims
-     * be able to handle the incoming request.
-     *
-     * @param request The request we are looking to handle
-     * @return The IsoDispatchHandler that can handle the request, null if no
-     *         handler claims the request.
-     * @throws Exception For bad behaviour.
-     */
     private DispatchHandler
     getDispatchHandler_regex(HttpServletRequest request)
             throws Exception {
@@ -658,6 +671,9 @@ public class Squeak extends DispatchServlet {
 
         return dispatchHandler;
     }
+*/
+
+
 
 
 }

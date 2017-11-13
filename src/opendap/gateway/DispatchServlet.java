@@ -184,7 +184,6 @@ public class DispatchServlet extends HttpServlet {
             GatewayPathInfo gpi = _gatewayDispatchHandler.getGateWayPathInfo(req);
             return _gatewayDispatchHandler.getLastModified(gpi);
 
-
         }
         finally {
             LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "GATEWAY_SERVICE_ACCESS");

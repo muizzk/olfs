@@ -26,29 +26,23 @@
 
 package opendap.gateway;
 
-import opendap.bes.BESError;
-import opendap.bes.BadConfigurationException;
 import opendap.bes.BesDapDispatcher;
 import opendap.bes.PathInfo;
 import opendap.coreServlet.ReqInfo;
-import opendap.coreServlet.Squeak;
+import opendap.coreServlet.RequestCache;
 import opendap.coreServlet.Util;
-import opendap.ppt.PPTException;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Vector;
-import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -97,6 +91,9 @@ public class DispatchHandler extends BesDapDispatcher {
     }
 
 
+    public BesGatewayApi getBesGatewayApi(){
+        return _besApi;
+    }
 
 
     @Override
@@ -163,34 +160,28 @@ public class DispatchHandler extends BesDapDispatcher {
 
 
     public GatewayPathInfo getGateWayPathInfo(HttpServletRequest req){
-        GatewayPathInfo pi = new GatewayPathInfo(req,_besApi);
-        return pi;
+        String relativeUrl = ReqInfo.getLocalUrl(req);
+        return getGateWayPathInfo(relativeUrl);
+    }
+
+    public GatewayPathInfo getGateWayPathInfo(String resourcePath) {
+        GatewayPathInfo gpi;
+        String cacheKey = PathInfo.getCacheKey(resourcePath);
+        gpi = (GatewayPathInfo) RequestCache.get(cacheKey);
+        if(gpi!=null) {
+            log.debug("getBesPathInfo() - RequestCache has PathInfo for key {}",cacheKey);
+            return gpi;
+        }
+        gpi = new GatewayPathInfo(resourcePath,_besApi);
+        RequestCache.put(cacheKey,gpi);
+        log.debug("getBesPathInfo() - Adding PathInfo for key {} to RequestCache",cacheKey);
+
+        return gpi;
     }
 
     @Override
     public long getLastModified(PathInfo pi){
-
-        String resourceId = _besApi.getBesDataSourceID(pi.path(), BesGatewayApi.stripDotSuffixPattern,false);
-
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // THIS IS A HACK TO MAKE THIS WORK WITHOUT A GATEWAY SPECIFIC showPathInfo command.
-        String localhost = "http://localhost:8080/opendap";
-        if(resourceId.startsWith(localhost))
-            resourceId = resourceId.substring(localhost.length());
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        long lmt = -1;
-        try {
-            pi = Squeak.besGetPathInfo(resourceId);
-            lmt = pi.lastModified().getTime();
-        } catch (IOException | BadConfigurationException | PPTException | JDOMException | BESError e) {
-            String msg = "Failed to get PathInfo for a gateway ID of '"+resourceId+"' ";
-            msg += "Caught "+e.getClass().getName()+" message: "+e.getMessage();
-            log.error(msg);
-        }
-
-        return lmt;
-
+        return pi.lastModified().getTime();
     }
 
 
@@ -275,6 +266,23 @@ public class DispatchHandler extends BesDapDispatcher {
         return dataSource;
     }
 
+
+    static void  setA(thing1 pi){
+        pi = new thing1("boo");
+        System.out.println("pi.path: "+ pi.path);
+    }
+
+    public static void main(String args[]){
+
+        thing1 foo = new thing1("foo");
+
+        System.out.println("foo.path(): "+ foo.path());
+
+        setA(foo);
+        System.out.println("foo.path(): "+ foo.path());
+
+
+    }
 
 
 }
