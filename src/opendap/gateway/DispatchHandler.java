@@ -266,23 +266,4 @@ public class DispatchHandler extends BesDapDispatcher {
         return dataSource;
     }
 
-
-    static void  setA(thing1 pi){
-        pi = new thing1("boo");
-        System.out.println("pi.path: "+ pi.path);
-    }
-
-    public static void main(String args[]){
-
-        thing1 foo = new thing1("foo");
-
-        System.out.println("foo.path(): "+ foo.path());
-
-        setA(foo);
-        System.out.println("foo.path(): "+ foo.path());
-
-
-    }
-
-
 }
