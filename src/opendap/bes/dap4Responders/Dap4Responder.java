@@ -34,6 +34,7 @@ import opendap.coreServlet.Scrub;
 import opendap.coreServlet.Util;
 import opendap.http.error.*;
 import opendap.namespaces.DAP;
+import opendap.wcs.v2_0.BadParameterException;
 import org.jdom.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,6 +265,13 @@ public abstract class Dap4Responder extends BesDapResponder  {
         _log.debug("respondToHttpGetRequest() - Checking Last-Modified header...");
 
         if (!response.containsHeader("Last-Modified")) {
+
+
+            // I used to set LMT in here (a bug fix I am sure) and but it turns out it's not a good spot
+            // to do the setting of it. So, if it's not set here, throw an Exception.
+            throw new BadParameterException("The Last-Modifed header was not set, yet it should have been!");
+
+            /*
             _log.debug("respondToHttpGetRequest() - Last-Modified header has not been set. Setting...");
 
             Date lmt = new Date(getLastModified(request));
@@ -273,6 +281,7 @@ public abstract class Dap4Responder extends BesDapResponder  {
             response.setHeader("Last-Modified",httpDateFormat.format(lmt));
 
             _log.debug("respondToHttpGetRequest() - Last-Modified: {}", httpDateFormat.format(lmt));
+           */
 
 
         } else {

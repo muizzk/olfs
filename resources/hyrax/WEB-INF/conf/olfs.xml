@@ -184,7 +184,7 @@
       to the log then uncomment the Timer and set the enabled attribute's value to "true"
       WARNING: There is some performance cost to utilizing the Timer.
     -->
-    <!-- Timer enabled="false" / -->
+    <Timer enabled="false" />
 
 
 </OLFSConfig>

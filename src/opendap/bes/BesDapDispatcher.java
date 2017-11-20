@@ -54,6 +54,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -378,6 +379,17 @@ public class BesDapDispatcher implements DispatchHandler {
                 pi.path().endsWith("catalog.xml") ||
                 pi.path().endsWith("/"))
             return false;
+
+
+        if (!response.containsHeader("Last-Modified")) {
+            _log.debug("respondToHttpGetRequest() - Last-Modified header has not been set. Setting...");
+            long lmt = getLastModified(pi);
+            SimpleDateFormat httpDateFormat = new SimpleDateFormat(Dap4Responder.HttpDatFormatString);
+            response.setHeader("Last-Modified", httpDateFormat.format(lmt));
+
+            _log.debug("respondToHttpGetRequest() - Last-Modified: {}", httpDateFormat.format(lmt));
+
+        }
 
         //###########################################################################
         //###########################################################################

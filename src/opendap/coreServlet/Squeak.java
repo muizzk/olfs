@@ -438,7 +438,7 @@ public class Squeak extends DispatchServlet {
                 getDispatchHandler(gdhp);
                 if (gdhp.dispatchHandler != null) {
                     _log.debug("Request being handled by: " + gdhp.dispatchHandler.getClass().getName());
-                    gdhp.dispatchHandler.getLastModified(gdhp.pathInfo);
+                    lmt = gdhp.dispatchHandler.getLastModified(gdhp.pathInfo);
                 } else {
                     //send404(request,response);
                     throw  new OPeNDAPException(HttpServletResponse.SC_NOT_FOUND, "Failed to locate resource: "+relativeUrl);

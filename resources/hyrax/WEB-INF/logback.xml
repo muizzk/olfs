@@ -120,4 +120,6 @@
         <appender-ref ref="HAI_DEBUG_LOGGER"/>
     </root>
 
+    <logger name="opendap.coreServlet.DispatchServlet"    level="info"/>
+
 </configuration>
