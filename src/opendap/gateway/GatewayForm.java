@@ -50,12 +50,6 @@ public class GatewayForm extends HttpResponder {
     private static String defaultRegex = ".*";
 
 
-    public GatewayForm(String sysPath) {
-        super(sysPath, null, defaultRegex);
-        log = org.slf4j.LoggerFactory.getLogger(this.getClass());
-
-    }
-
     public GatewayForm(String sysPath, String pathPrefix) {
         super(sysPath, pathPrefix, defaultRegex);
         log = org.slf4j.LoggerFactory.getLogger(this.getClass());
@@ -72,10 +66,12 @@ public class GatewayForm extends HttpResponder {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    /*
     @Override
     public long getLastModified(HttpServletRequest request) throws Exception {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
+   */
 
     public void respondToHttpGetRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
 

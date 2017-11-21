@@ -40,11 +40,13 @@ public class NoMatchingResponder extends HttpResponder {
                 "handler matched', and thus an instance may never be invoked to do stuff :(");
     }
 
+    /*
     @Override
     public long getLastModified(HttpServletRequest request) throws Exception {
         throw new Exception("The "+getClass().getName()+" is semantically a symbol for 'we looked and no " +
                 "handler matched', and thus an instance may never be invoked to do stuff :(");
     }
+    */
 
     @Override
     public void respondToHttpGetRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {

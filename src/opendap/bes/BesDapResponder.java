@@ -66,6 +66,7 @@ public abstract class BesDapResponder extends DapResponder {
 
 
 
+    /*
     @Override
     public long getLastModified(HttpServletRequest request) throws Exception {
 
@@ -80,7 +81,7 @@ public abstract class BesDapResponder extends DapResponder {
         return ri.lastModified();
 
     }
-
+    */
 
 
 

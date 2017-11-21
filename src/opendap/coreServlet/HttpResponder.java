@@ -95,7 +95,7 @@ public abstract class HttpResponder {
 
 
     public abstract ResourceInfo getResourceInfo(String resourceName) throws Exception;
-    public abstract long getLastModified(HttpServletRequest request) throws Exception ;
+    // public abstract long getLastModified(HttpServletRequest request) throws Exception ;
     public abstract void respondToHttpGetRequest(HttpServletRequest request, HttpServletResponse response) throws Exception;
 
 

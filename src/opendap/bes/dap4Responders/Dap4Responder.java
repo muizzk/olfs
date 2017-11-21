@@ -423,7 +423,7 @@ public abstract class Dap4Responder extends BesDapResponder  {
         return xmlBase;
     }
 
-
+     /*
     @Override
     public long getLastModified(HttpServletRequest request) throws Exception {
 
@@ -437,7 +437,7 @@ public abstract class Dap4Responder extends BesDapResponder  {
         return ri.lastModified();
 
     }
-
+    */
 
     /*
 
