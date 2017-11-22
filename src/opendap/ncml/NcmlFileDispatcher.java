@@ -231,7 +231,7 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
                                   HttpServletResponse response)
             throws Exception {
 
-        String serviceUrl = ReqInfo.getFullServiceContext(request);
+        String serviceContext = ReqInfo.getFullServiceContext(request);
         String name = ReqInfo.getLocalUrl(request);
         Document ncml = getNcmlDocument(name);
         String besPrefix = _besApi.getBESprefix(name);
@@ -245,7 +245,7 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
             if(location!=null){
                 while(location.startsWith("/"))
                     location = location.substring(1);
-                location = serviceUrl + besPrefix + location;
+                location = serviceContext + besPrefix + location;
                 e.setAttribute("location",location);
             }
         }

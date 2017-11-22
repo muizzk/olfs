@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -57,7 +58,8 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
     private AtomicInteger reqNumber;
     private String systemPath;
     private boolean isInitialized;
-    private Vector<HttpResponder> responders;
+    private OlfsControlApi olfsControlApi;
+    private BesControlApi  besControlApi;
     private boolean _devMode;
 
 
@@ -66,7 +68,6 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
         log = org.slf4j.LoggerFactory.getLogger(this.getClass());
         isInitialized = false;
         _devMode = false;
-        responders = new Vector<>();
         reqNumber = new AtomicInteger(0);
     }
 
@@ -76,8 +77,8 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
             return;
 
         systemPath = ServletUtil.getSystemPath(this, "");
-        responders.add(new OlfsControlApi(systemPath));
-        responders.add(new BesControlApi(systemPath));
+        olfsControlApi = new OlfsControlApi(systemPath);
+        besControlApi = new BesControlApi(systemPath);
         log.info("masterDispatchRegex=\"" + getDispatchRegex() + "\"");
         
         String devMode = getInitParameter("DeveloperMode");
@@ -145,18 +146,11 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
 
 
     public Pattern getDispatchRegex() {
-        String masterRegex = null;
-
-        for (HttpResponder p : responders) {
-            if (masterRegex != null)
-                masterRegex += "|";
-            else
-                masterRegex = "";
-
-            masterRegex += p.getRequestMatchRegexString();
-        }
-        masterRegex =  masterRegex==null?"":masterRegex;
-        return Pattern.compile(masterRegex);
+        StringBuilder masterRegex = new StringBuilder();
+        masterRegex.append(olfsControlApi.getRequestMatchRegexString());
+        masterRegex.append("|");
+        masterRegex.append(besControlApi.getRequestMatchRegexString());
+        return Pattern.compile(masterRegex.toString());
     }
 
 
@@ -181,27 +175,14 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
      *         since midnight January 1, 1970 GMT
      */
     protected long getLastModified(HttpServletRequest req) {
-
         RequestCache.openThreadCache();
-
         long reqno = reqNumber.incrementAndGet();
         LogUtil.logServerAccessStart(req, "ADMIN_SERVICE_ACCESS", "LastModified", Long.toString(reqno));
-
-        if (ReqInfo.isServiceOnlyRequest(req))
-            return -1;
-
-
         try {
-            return -1;
-
-        } catch (Exception e) {
-            return -1;
+            return new Date().getTime();
         } finally {
             LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "ADMIN_SERVICE_ACCESS");
-
         }
-
-
     }
 
 
@@ -231,33 +212,23 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
             LogUtil.logServerAccessStart(request, "ADMIN_SERVICE_ACCESS", "HTTP-GET", Integer.toString(reqNumber.incrementAndGet()));
 
             if (!redirect(request, response)) {
-
                 String name = getName(request);
-
                 log.debug("The client requested this: " + name);
-
-
                 String requestURL = request.getRequestURL().toString();
 
-                for (HttpResponder r : responders) {
-                    boolean match = r.matches(requestURL);
-                    if (match) {
-                        log.debug("The request URL: " + requestURL + " matches " +
-                                "the pattern: \"" + r.getRequestMatchRegexString() + "\"");
-
-                        //dsi = new BESResource(dataSource);
-                        //if(dsi.isDataset()){
-                        r.respondToHttpGetRequest(request, response);
-                        return;
-                        //}
-
-                    }
+                if(olfsControlApi.getRequestSuffixMatchPattern().matcher(requestURL).matches()){
+                    log.debug("OLFS Control Request Has Been Received.");
+                    olfsControlApi.respondToHttpGetRequest(request, response);
                 }
-
-
-                String msg = "BAD URL - not an OPeNDAP request suffix.";
-                log.error("doGet() - {}",msg);
-                throw new BadRequest(msg);
+                if(besControlApi.getRequestSuffixMatchPattern().matcher(requestURL).matches()){
+                    log.debug("BES Control Request Has Been Received.");
+                    besControlApi.respondToHttpGetRequest(request, response);
+                }
+                else {
+                    String msg = "BAD URL - not an OPeNDAP request suffix.";
+                    log.error("doGet() - {}", msg);
+                    throw new BadRequest(msg);
+                }
 
             }
 
@@ -290,23 +261,19 @@ public class DispatchServlet extends opendap.coreServlet.DispatchServlet {
 
                 String requestURL = request.getRequestURL().toString();
 
-                for (HttpResponder r : responders) {
-                    if (r.matches(requestURL)) {
-                        log.debug("The request URL: " + requestURL + " matches " +
-                                "the pattern: \"" + r.getRequestMatchRegexString() + "\"");
-
-                        //dsi = new BESResource(dataSource);
-                        //if(dsi.isDataset()){
-                        r.respondToHttpPostRequest(request, response);
-                        return;
-                        //}
-
-                    }
+                if(olfsControlApi.getRequestSuffixMatchPattern().matcher(requestURL).matches()){
+                    log.debug("OLFS Control Request Has Been Received.");
+                    olfsControlApi.respondToHttpPostRequest(request, response);
                 }
-
-                String msg = "BAD URL - not an OPeNDAP request suffix.";
-                log.error("doGet() - {}", msg);
-                throw new BadRequest(msg);
+                else if(besControlApi.getRequestSuffixMatchPattern().matcher(requestURL).matches()){
+                    log.debug("BES Control Request Has Been Received.");
+                    besControlApi.respondToHttpPostRequest(request, response);
+                }
+                else {
+                    String msg = "BAD URL - not an OPeNDAP request suffix.";
+                    log.error("doGet() - {}", msg);
+                    throw new BadRequest(msg);
+                }
             }
 
         } catch (Throwable t) {

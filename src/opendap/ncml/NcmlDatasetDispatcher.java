@@ -29,6 +29,7 @@ import opendap.bes.BesDapDispatcher;
 import opendap.bes.PathInfo;
 import opendap.coreServlet.HttpResponder;
 import opendap.coreServlet.ReqInfo;
+import opendap.coreServlet.RequestCache;
 import org.jdom.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Ncml Dataset handler responses for Hyrax. Massages NcML content retrieved from the BES
@@ -101,33 +104,23 @@ public class NcmlDatasetDispatcher extends BesDapDispatcher {
             throws Exception {
 
         String relativeUrl = pi.path();
-        
         log.debug("The client requested this resource: {}",relativeUrl);
-
         for (HttpResponder r : getResponders()) {
             log.debug("Checking responder: "+ r.getClass().getSimpleName()+ " (pathPrefix: "+r.getPathPrefix()+")");
-
             String candidateDataSourceId = getBesApi().getBesDataSourceID(relativeUrl,r.getRequestSuffixMatchPattern());
-
             if (NcmlManager.isNcmlDataset(candidateDataSourceId)){
-                log.info("The candidateDataSourceId: \"{}\" if an NcmlDataset.", candidateDataSourceId);
-
-                if(r.matches(relativeUrl)) {
-
-                    log.info("The relative URL: " + relativeUrl + " matches " +
-                            "the pattern: \"" + r.getRequestMatchRegexString() + "\"");
-
-                    if (sendResponse)
+                log.info("The candidateDataSourceId: \"{}\" is an NcmlDataset.", candidateDataSourceId);
+                Pattern p = r.getRequestSuffixMatchPattern();
+                Matcher m = p.matcher(pi.remainder());
+                if(m.matches()){
+                    if (sendResponse){
                         r.respondToHttpGetRequest(request, response);
-
+                    }
                     return true;
                 }
             }
         }
-
-
         return false;
-
     }
 
 

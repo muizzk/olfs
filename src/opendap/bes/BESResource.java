@@ -45,9 +45,9 @@ import java.util.List;
  * Date: Nov 15, 2006
  * Time: 7:10:51 PM
  */
+@Deprecated
 public class BESResource implements ResourceInfo {
 
-    public static final String BESDateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
     private boolean exists;
     private boolean accessible;
@@ -66,7 +66,6 @@ public class BESResource implements ResourceInfo {
 
 
     private static final Namespace BES_NS = opendap.namespaces.BES.BES_NS;
-
 
     public BESResource(String dataSourceName, BesApi besApi) throws Exception {
 
@@ -122,7 +121,7 @@ public class BESResource implements ResourceInfo {
             String s = dataset.getAttributeValue("size");
             size = Long.valueOf(s);
 
-            SimpleDateFormat sdf = new SimpleDateFormat(BESDateFormat);
+            SimpleDateFormat sdf = new SimpleDateFormat(BES.DATE_FORMAT);
             lastModified = sdf.parse(dataset.getAttributeValue("lastModified"));
 
             String isNode = dataset.getAttributeValue("node");

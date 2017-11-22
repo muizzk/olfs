@@ -78,6 +78,7 @@ public class BES {
     private static final Namespace BES_NS = opendap.namespaces.BES.BES_NS;
     private static final Namespace BES_ADMIN_NS = opendap.namespaces.BES.BES_ADMIN_NS;
 
+    public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
     public BES(BESConfig config) throws Exception {
         _config = config.copy();

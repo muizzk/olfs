@@ -98,10 +98,12 @@
                 <!-- <IpMatch>65\.55\.[012]?\d?\d\.[012]?\d?\d</IpMatch>   -->
 
             <!-- </Handler>  -->
-                     
-                     
-            <Handler className="opendap.ncml.NcmlDatasetDispatcher" />            
-   
+
+
+            <Handler className="opendap.ncml.NcmlFileDispatcher" />
+
+            <Handler className="opendap.ncml.NcmlDatasetDispatcher" />
+            
             <Handler className="opendap.threddsHandler.StaticCatalogDispatch">
                 <prefix>thredds</prefix>
                 <useMemoryCache>true</useMemoryCache>

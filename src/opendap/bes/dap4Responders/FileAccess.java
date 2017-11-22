@@ -27,14 +27,10 @@
 package opendap.bes.dap4Responders;
 
 import opendap.bes.BESError;
-import opendap.bes.BESResource;
 import opendap.bes.BadConfigurationException;
 import opendap.bes.PathInfo;
 import opendap.bes.dap2Responders.BesApi;
-import opendap.coreServlet.MimeTypes;
-import opendap.coreServlet.ReqInfo;
-import opendap.coreServlet.ResourceInfo;
-import opendap.coreServlet.Scrub;
+import opendap.coreServlet.*;
 import opendap.dap.Request;
 import opendap.io.HyraxStringEncoding;
 import opendap.ppt.PPTException;
@@ -45,7 +41,6 @@ import org.slf4j.Logger;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -105,6 +100,46 @@ public class FileAccess extends Dap4Responder {
 
         BesApi besApi = getBesApi();
 
+        PathInfo pi = Squeak.besGetPathInfo(relativeUrl);
+        if( pi.remainder().isEmpty()){ // If the remainder is empty then the thing exists
+            if(pi.isFile()){
+                if(pi.isAccessible()){
+                    if(pi.isData()){
+                        if (allowDirectDataSourceAccess()) {
+                            sendDatasetFile(resourceID, response);
+                        }
+                        else {
+                            log.warn("respondToHttpGetRequest() - Sending Access Denied for resource: " + Scrub.completeURL(resourceID));
+                            sendDirectAccessDenied(req,response);
+                        }
+                    }
+                    else {
+                        String errMsg = "Unable to locate BES data resource: " + Scrub.completeURL(resourceID);
+                        log.info("respondToHttpGetRequest() - {}", errMsg);
+                        sendHttpErrorResponse(HttpServletResponse.SC_NOT_FOUND, errMsg, "docs", response);
+                    }
+                }
+                else {
+                    String errMsg = "BES data source {} is not accessible." + Scrub.completeURL(resourceID);
+                    log.info("respondToHttpGetRequest() - {}", errMsg);
+                    sendHttpErrorResponse(HttpServletResponse.SC_NOT_FOUND, errMsg, "docs", response);
+                }
+
+            }
+            else {
+                String errMsg = "You may not download nodes/directories, only files." + Scrub.completeURL(resourceID);
+                log.info("respondToHttpGetRequest() - {}", errMsg);
+                sendHttpErrorResponse(HttpServletResponse.SC_FORBIDDEN, errMsg, "docs", response);
+            }
+
+        }
+        else {
+            String errMsg = "Unable to locate BES resource: " + Scrub.completeURL(resourceID);
+            log.info("matches() - {}", errMsg);
+            sendHttpErrorResponse(HttpServletResponse.SC_NOT_FOUND, errMsg, "docs", response);
+        }
+
+        /*
         // FIXME -  Pass in PathInfo (or get it from RequestCache) and don't make this call to the BES.
         ResourceInfo dsi = new BESResource(resourceID, besApi);
         if (dsi.sourceExists()) {
@@ -147,7 +182,7 @@ public class FileAccess extends Dap4Responder {
         }
 
 
-
+          */
 
 
 

@@ -25,15 +25,12 @@
  */
 package opendap.nciso;
 
-import opendap.bes.BESError;
-import opendap.bes.BESResource;
 import opendap.bes.PathInfo;
 import opendap.bes.Version;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.bes.dap4Responders.MediaType;
 import opendap.coreServlet.*;
 import opendap.dap.Request;
-import opendap.http.mediaTypes.TextHtml;
 import opendap.http.mediaTypes.TextXml;
 import opendap.xml.Transformer;
 import org.jdom.Document;
@@ -46,7 +43,6 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Date;
 import java.util.regex.Pattern;
 
 /**

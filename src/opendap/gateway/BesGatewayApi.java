@@ -27,14 +27,12 @@
 package opendap.gateway;
 
 import opendap.bes.BESError;
-import opendap.bes.BESResource;
 import opendap.bes.BadConfigurationException;
 import opendap.bes.PathInfo;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.coreServlet.OPeNDAPException;
 import opendap.coreServlet.ReqInfo;
 import opendap.coreServlet.Util;
-import opendap.dap4.Dap4Error;
 import opendap.namespaces.BES;
 import opendap.ppt.PPTException;
 import org.apache.commons.httpclient.Header;
@@ -416,7 +414,7 @@ public class BesGatewayApi extends BesApi {
             dataset.setAttribute("name",dataSourceURL);
             dataset.setAttribute("size",""+size);
 
-            SimpleDateFormat sdf = new SimpleDateFormat(BESResource.BESDateFormat);
+            SimpleDateFormat sdf = new SimpleDateFormat(opendap.bes.BES.DATE_FORMAT);
 
             dataset.setAttribute("lastModified",sdf.format(lastModified));
 

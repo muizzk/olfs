@@ -418,9 +418,7 @@ public class BesDapDispatcher implements DispatchHandler {
             _log.debug("Checking responder: " + r.getClass().getSimpleName() +
                     " (pathPrefix: " + r.getPathPrefix() + ")");
 
-            Pattern p = r.getRequestSuffixMatchPattern();
-            Matcher m = p.matcher(pi.remainder());
-            if(m.matches()){
+            if(r.getRequestSuffixMatchPattern().matcher(pi.remainder()).matches()){
                 if (sendResponse){
                     r.respondToHttpGetRequest(request, response);
                 }
@@ -430,28 +428,6 @@ public class BesDapDispatcher implements DispatchHandler {
         }
         return false;
 
-
-        /*
-
-        for (HttpResponder r : _responders) {
-            _log.debug("Checking responder: " + r.getClass().getSimpleName() + " (pathPrefix: " + r.getPathPrefix() + ")");
-            if (r.matches(relativeUrl)) {
-
-                _log.info("The relative URL: " + relativeUrl + " matches " +
-                        "the pattern: \"" + r.getRequestMatchRegexString() + "\"");
-
-                if (sendResponse){
-
-                    r.respondToHttpGetRequest(request, response);
-
-                }
-                RequestCache.put(httpResponderCacheKeyBase,r);
-                return true;
-            }
-        }
-        RequestCache.put(httpResponderCacheKeyBase, new NoMatchingResponder());
-        return false;
-        */
 
     }
 

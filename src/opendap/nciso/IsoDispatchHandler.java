@@ -25,7 +25,6 @@
  */
 package opendap.nciso;
 
-import opendap.bes.BESResource;
 import opendap.bes.PathInfo;
 import opendap.bes.Version;
 import opendap.bes.dap2Responders.BesApi;
@@ -43,7 +42,6 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Date;
 import java.util.regex.Pattern;
 
 /**

@@ -94,12 +94,7 @@ public abstract class BesDapResponder extends DapResponder {
 
 
 
-/**
-     *
-     * @param relativeUrl
-     * @return
-     */
-    @Override
+/*
     public boolean matches(String relativeUrl) {
 
         String besDataSourceId = getBesApi().getBesDataSourceID(relativeUrl, getRequestSuffixMatchPattern());
@@ -110,7 +105,7 @@ public abstract class BesDapResponder extends DapResponder {
         return false;
 
     }
-
+*/
 
     public BesApi getBesApi(){
         return _besApi;

@@ -82,9 +82,9 @@ public abstract class HttpResponder {
     }
 
 
-    public boolean matches(String s){
-       return getRequestSuffixMatchPattern().matcher(s).matches();
-    }
+    //public boolean matches(String s){
+    //   return getRequestSuffixMatchPattern().matcher(s).matches();
+    //}
 
 
     public void setPathPrefix(String prefix){ pathPrefix = prefix ;}
