@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintStream;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,10 +68,15 @@ public class VersionDispatchHandler implements DispatchHandler {
 
     private Pattern _requestMatchPattern ;
 
+    private Date _launchedAt;
+
     public VersionDispatchHandler() {
 
         log = org.slf4j.LoggerFactory.getLogger(getClass());
         _requestMatchPattern = Pattern.compile(_versionMatchRegexString, Pattern.CASE_INSENSITIVE);
+
+
+        _launchedAt = new Date();
 
         initialized = false;
 
@@ -119,7 +125,7 @@ public class VersionDispatchHandler implements DispatchHandler {
     }
 
     @Override
-    public long getLastModified(PathInfo besPathInfo) { return -1; }
+    public long getLastModified(PathInfo besPathInfo) { return _launchedAt.getTime(); }
 
     @Override
     public void destroy() {

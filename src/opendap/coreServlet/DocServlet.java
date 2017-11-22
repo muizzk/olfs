@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -85,29 +86,19 @@ public class DocServlet extends HttpServlet {
 
 
     public long getLastModified(HttpServletRequest req) {
-
-        long lmt = -1;
-
-
+        long lmt = new Date().getTime();
         String name = Scrub.fileName(getName(req));
-
-
         if(name!=null) {
             File f = new File(name);
             if (f.exists())
                 lmt = f.lastModified();
-
         }
         //log.debug("getLastModified() - Tomcat requested lastModified for: " + name + " Returning: " + new Date(lmt));
-
         return lmt;
-
-
     }
 
 
     private boolean redirect(HttpServletRequest req, HttpServletResponse res) throws IOException {
-
         if (req.getPathInfo() == null) {
             res.sendRedirect(Scrub.urlContent(req.getRequestURI() + "/index.html"));
             log.debug("Sent redirect to make the web page work!");

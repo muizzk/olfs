@@ -207,6 +207,7 @@ public class RemoteHttpCatalog implements Catalog {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
     public long getLastModified() {
+        //FIXME - Use HTTP HEAD to figure out the LMT. OK?
         return -1;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

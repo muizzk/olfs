@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -154,21 +155,15 @@ public class PDPService extends HttpServlet {
      *         since midnight January 1, 1970 GMT
      */
     protected long getLastModified(HttpServletRequest req) {
-
-
-
         try {
             RequestCache.openThreadCache();
-
             long reqno = _reqNumber.incrementAndGet();
             LogUtil.logServerAccessStart(req, _accessLogName, "LastModified", Long.toString(reqno));
-            return -1;
+            return new Date().getTime();
 
         } finally {
             LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, _accessLogName);
         }
-
-
     }
 
 

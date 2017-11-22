@@ -103,7 +103,7 @@ public class Dap2Data extends Dap4Responder {
 
 
         String relativeUrl = ReqInfo.getLocalUrl(request);
-        String resourceID = getResourceId(relativeUrl,false);
+        String resourceID = getResourceId(relativeUrl);
 
         QueryParameters qp = new  QueryParameters(request);
 

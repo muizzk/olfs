@@ -125,7 +125,9 @@ public class XmlRequestHandler implements opendap.coreServlet.DispatchHandler, W
     */
 
     @Override
-    public long getLastModified(PathInfo pi) { return -1;  }
+    public long getLastModified(PathInfo pi) {
+        return CatalogWrapper.getLastModified();
+    }
 
 
     @Override

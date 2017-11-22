@@ -95,7 +95,7 @@ public class CsvDR extends Dap4Responder {
         String localUrl = ReqInfo.getLocalUrl(request);
         QueryParameters qp = new QueryParameters(request);
 
-        String resourceID = getResourceId(localUrl, false);
+        String resourceID = getResourceId(localUrl);
 
 
         BesApi besApi = getBesApi();

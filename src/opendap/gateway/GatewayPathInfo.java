@@ -47,7 +47,7 @@ public class GatewayPathInfo extends PathInfo {
         this();
         _besApi = besApi;
         // FIXME! MAKE SURE THIS WORKS! MAY NEED TO POPULATE OTHER VALUES!
-        _path =  _besApi.getBesDataSourceID(path, BesGatewayApi.stripDotSuffixPattern,false);
+        _path =  _besApi.getBesDataSourceID(path, BesGatewayApi.stripDotSuffixPattern);
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // THIS IS A HACK TO MAKE THIS WORK WITHOUT A GATEWAY SPECIFIC showPathInfo BES command.

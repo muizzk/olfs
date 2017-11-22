@@ -33,6 +33,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -77,7 +78,7 @@ public class NoPostHandler implements DispatchHandler {
 
     @Override
     public long getLastModified(PathInfo pi) {
-        return -1;
+        return new Date().getTime();
     }
 
 

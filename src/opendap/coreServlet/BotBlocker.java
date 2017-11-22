@@ -32,6 +32,7 @@ import org.jdom.Element;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Vector;
 import java.util.regex.Pattern;
@@ -270,7 +271,7 @@ public class BotBlocker implements DispatchHandler {
      */
     @Override
     public long getLastModified(PathInfo pi) {
-        return -1;
+        return new Date().getTime();
     }
 
 

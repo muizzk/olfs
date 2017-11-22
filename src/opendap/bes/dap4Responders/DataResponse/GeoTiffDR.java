@@ -90,9 +90,9 @@ public class GeoTiffDR extends Dap4Responder {
 
     public void sendNormativeRepresentation(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        String requestedResourceId = ReqInfo.getLocalUrl(request);
+        String relativeUrl = ReqInfo.getLocalUrl(request);
         QueryParameters qp = new QueryParameters(request);
-        String resourceID = getResourceId(requestedResourceId, false);
+        String resourceID = getResourceId(relativeUrl);
 
 
         BesApi besApi = getBesApi();

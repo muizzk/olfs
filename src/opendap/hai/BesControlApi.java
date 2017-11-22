@@ -84,10 +84,12 @@ public class BesControlApi extends HttpResponder {
         init();
     }
 
+    /*
     @Override
     public ResourceInfo getResourceInfo(String resourceName) throws Exception {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+    */
 
     /*
     @Override

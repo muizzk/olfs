@@ -372,6 +372,7 @@ public class WcsServiceManager {
 
     }
 
+    //TODO - Make this return a meaningful LMT by taking in the request and figuring out which coverage etc.
     public static long getLastModified(){
         return _serviceStartTime.getTime();
     }

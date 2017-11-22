@@ -93,10 +93,10 @@ public class HtmlDMR extends Dap4Responder {
 
 
         // String context = request.getContextPath();
-        String requestedResourceId = ReqInfo.getLocalUrl(request);
+        String relativeUrl = ReqInfo.getLocalUrl(request);
         String xmlBase = getXmlBase(request);
 
-        String resourceID = getResourceId(requestedResourceId, false);
+        String resourceID = getResourceId(relativeUrl);
         QueryParameters qp = new QueryParameters(request);
         Request oreq = new Request(null,request);
 

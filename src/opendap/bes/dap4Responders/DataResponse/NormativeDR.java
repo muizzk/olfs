@@ -113,7 +113,7 @@ public class NormativeDR extends Dap4Responder {
 
         String relativeUrl = ReqInfo.getLocalUrl(request);
         String xmlBase = getXmlBase(request);
-        String resourceID = getResourceId(relativeUrl, false);
+        String resourceID = getResourceId(relativeUrl);
 
         QueryParameters qp = new  QueryParameters(request);
 

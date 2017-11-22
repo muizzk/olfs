@@ -165,7 +165,8 @@ public class HttpGetHandler implements opendap.coreServlet.DispatchHandler {
     */
 
 
-    @Override public long getLastModified(PathInfo pi) {
+    @Override
+    public long getLastModified(PathInfo pi) {
         return WcsServiceManager.getLastModified();
     }
 

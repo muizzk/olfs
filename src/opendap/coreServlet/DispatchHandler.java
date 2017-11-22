@@ -103,9 +103,10 @@ public interface DispatchHandler {
      * @return The last modified date of the URI referenced in th request.
      * @see javax.servlet.http.HttpServlet
      */
-    // @Deprecated
-    // public long getLastModified(HttpServletRequest req);
-
+    /*  Dropped in favor of the new getLastModified(PathInfo besPathInfo)
+     @Deprecated
+     public long getLastModified(HttpServletRequest req);
+    */
     /**
      *
      * @param besPathInfo The BES PathInfo response for the requested resource.

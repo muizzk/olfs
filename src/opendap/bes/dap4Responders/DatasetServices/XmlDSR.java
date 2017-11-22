@@ -96,17 +96,15 @@ public class XmlDSR extends Dap4Responder {
 
     @Override
     public void sendNormativeRepresentation(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String requestedResource = request.getRequestURL().toString();
-
-        //String baseUrl = opendap.coreServlet.Util.dropSuffixFrom(requestedResource,getRequestSuffixMatchPattern());
-        String baseUrl = getResourceId(requestedResource,false);
+        String relativeUrl = request.getRequestURL().toString();
+        String resourceId = getResourceId(relativeUrl);
 
         String context = request.getContextPath()+"/";
 
         Document serviceDescription = new Document();
 
 
-        log.debug("Sending {} for dataset: {}",getServiceTitle(),baseUrl);
+        log.debug("Sending {} for dataset: {}",getServiceTitle(),resourceId);
 
         HashMap<String,String> piMap = new HashMap<>( 2 );
         piMap.put( "type", "text/xsl" );
@@ -117,7 +115,7 @@ public class XmlDSR extends Dap4Responder {
 
         Element datasetServices;
 
-        datasetServices = normDSR.getDatasetServicesElement(baseUrl);
+        datasetServices = normDSR.getDatasetServicesElement(resourceId);
 
         serviceDescription.setRootElement(datasetServices);
 

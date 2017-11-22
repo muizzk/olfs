@@ -107,7 +107,7 @@ public class NcmlDatasetDispatcher extends BesDapDispatcher {
         for (HttpResponder r : getResponders()) {
             log.debug("Checking responder: "+ r.getClass().getSimpleName()+ " (pathPrefix: "+r.getPathPrefix()+")");
 
-            String candidateDataSourceId = getBesApi().getBesDataSourceID(relativeUrl,r.getRequestSuffixMatchPattern(),false);
+            String candidateDataSourceId = getBesApi().getBesDataSourceID(relativeUrl,r.getRequestSuffixMatchPattern());
 
             if (NcmlManager.isNcmlDataset(candidateDataSourceId)){
                 log.info("The candidateDataSourceId: \"{}\" if an NcmlDataset.", candidateDataSourceId);

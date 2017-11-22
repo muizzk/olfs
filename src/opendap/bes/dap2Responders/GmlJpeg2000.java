@@ -75,18 +75,12 @@ public class GmlJpeg2000 extends Dap4Responder {
 
 
     @Override
-    public boolean matches(String relativeUrl, boolean checkWithBes){
-        return super.matches(relativeUrl,checkWithBes);
-    }
-
-
-    @Override
     public void sendNormativeRepresentation(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        String requestedResourceId = ReqInfo.getLocalUrl(request);
+        String relativeUrl = ReqInfo.getLocalUrl(request);
         String constraintExpression = ReqInfo.getConstraintExpression(request);
 
-        String resourceID = getResourceId(requestedResourceId, false);
+        String resourceID = getResourceId(relativeUrl);
 
 
         BesApi besApi = getBesApi();

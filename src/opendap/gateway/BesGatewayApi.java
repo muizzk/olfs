@@ -295,13 +295,10 @@ public class BesGatewayApi extends BesApi {
      * the URL - the question mark and everything after it.)
      * @param suffixMatchPattern This parameter provides the method with a suffix regex to use in evaluating what part,
      * if any, of the relative URL must be removed to construct the besDataSourceId/
-     * @param checkWithBes This boolean value instructs the code to ask the appropriate BES if the resulting
-     * besDataSourceID is does in fact represent a valid data source in it's world. Because the BES gateway_module
-     * doesn't have catalog services this parameter is ignored.
      * @return
      */
     @Override
-    public String getBesDataSourceID(String relativeUrl, Pattern suffixMatchPattern, boolean checkWithBes){
+    public String getBesDataSourceID(String relativeUrl, Pattern suffixMatchPattern){
 
         _log.debug("getBesDataSourceID() - relativeUrl: " + relativeUrl);
 
@@ -330,7 +327,7 @@ public class BesGatewayApi extends BesApi {
             IOException,
             JDOMException, BESError {
         
-        String resourceId = getBesDataSourceID(path, stripDotSuffixPattern,false);
+        String resourceId = getBesDataSourceID(path, stripDotSuffixPattern);
         return super.getBesPathInfo(resourceId);
     }
 

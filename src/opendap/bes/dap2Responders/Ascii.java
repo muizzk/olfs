@@ -77,11 +77,6 @@ public class Ascii extends Dap4Responder {
     public boolean isMetadataResponder(){ return false; }
 
 
-    @Override
-    public boolean matches(String relativeUrl, boolean checkWithBes){
-        return super.matches(relativeUrl,checkWithBes);
-    }
-
 
     @Override
     public void sendNormativeRepresentation(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -91,7 +86,7 @@ public class Ascii extends Dap4Responder {
 
         String relativeUrl = ReqInfo.getLocalUrl(request);
 
-        String resourceID = getResourceId(relativeUrl, false);
+        String resourceID = getResourceId(relativeUrl);
 
         String constraintExpression = ReqInfo.getConstraintExpression(request);
 

@@ -84,7 +84,7 @@ public class DatasetHtmlForm extends Dap4Responder {
 
     public void sendNormativeRepresentation(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String relativeUrl = ReqInfo.getLocalUrl(request);
-        String resourceID = getResourceId(relativeUrl, false);
+        String resourceID = getResourceId(relativeUrl);
         String xmlBase = getXmlBase(request);
 
 

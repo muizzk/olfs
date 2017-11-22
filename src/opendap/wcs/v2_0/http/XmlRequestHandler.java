@@ -132,7 +132,7 @@ public class XmlRequestHandler implements opendap.coreServlet.DispatchHandler, W
 
     @Override
     public long getLastModified(PathInfo req) {
-        return -1;
+        return WcsServiceManager.getLastModified();
     }
 
     public void destroy() {

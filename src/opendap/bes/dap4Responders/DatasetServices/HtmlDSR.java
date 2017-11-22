@@ -101,10 +101,10 @@ public class HtmlDSR extends Dap4Responder {
     public void sendNormativeRepresentation(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
 
-        String requestedResource = request.getRequestURL().toString();
+        String relativeUrl = request.getRequestURL().toString();
 
         //String baseUrl = opendap.coreServlet.Util.dropSuffixFrom(requestedResource,getRequestSuffixMatchPattern());
-        String baseUrl = getResourceId(requestedResource, false);
+        String baseUrl = getResourceId(relativeUrl);
 
         String context = request.getContextPath()+"/";
 

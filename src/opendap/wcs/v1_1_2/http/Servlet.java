@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -362,7 +363,8 @@ public class Servlet extends HttpServlet {
 
 
         try {
-            return -1;
+            long lmt  =  new Date().getTime();
+            return lmt;
 
         } catch (Exception e) {
             return -1;

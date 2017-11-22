@@ -61,11 +61,13 @@ public class GatewayForm extends HttpResponder {
     public boolean isMetadataResponder(){ return true; }
 
 
+    /*
     @Override
     public ResourceInfo getResourceInfo(String resourceName) throws Exception {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
-
+    */
+    
     /*
     @Override
     public long getLastModified(HttpServletRequest request) throws Exception {

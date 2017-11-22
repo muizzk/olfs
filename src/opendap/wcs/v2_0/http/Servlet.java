@@ -49,6 +49,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -325,7 +326,8 @@ public class Servlet extends HttpServlet {
         long reqno = reqNumber.incrementAndGet();
         LogUtil.logServerAccessStart(req, "WCS_2.0_ACCESS", "LastModified", Long.toString(reqno));
         try {
-            return -1;
+            //TODO - Make this return a meaningful LMT.
+            return new Date().getTime();
         } finally {
             LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "WCS_2.0_ACCESS");
         }

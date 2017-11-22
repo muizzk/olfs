@@ -59,10 +59,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.stream.StreamSource;
 import java.io.*;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.TreeMap;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -353,7 +350,7 @@ public class ViewersServlet extends HttpServlet {
 
     public long getLastModified(HttpServletRequest req) {
 
-        long lmt;
+        long lmt = new Date().getTime();
 
         if (_webStartDisabled)
             return -1;

@@ -85,10 +85,12 @@ public abstract class BesDapResponder extends DapResponder {
 
 
 
+
+    /*
     public ResourceInfo getResourceInfo(String resourceName) throws Exception {
         return new BESResource(resourceName, getBesApi());
     }
-
+    */
 
 
 
@@ -100,32 +102,14 @@ public abstract class BesDapResponder extends DapResponder {
     @Override
     public boolean matches(String relativeUrl) {
 
-        return matches(relativeUrl,true);
-
-    }
-
-
-    /**
-     *
-     * @param relativeUrl
-     * @param checkWithBes
-     * @return
-     *
-     */
-    public boolean matches(String relativeUrl, boolean checkWithBes) {
-
-        String besDataSourceId = getBesApi().getBesDataSourceID(relativeUrl, getRequestSuffixMatchPattern(), checkWithBes);
+        String besDataSourceId = getBesApi().getBesDataSourceID(relativeUrl, getRequestSuffixMatchPattern());
 
         if(besDataSourceId!=null)
             return true;
 
-
         return false;
 
     }
-
-    //public abstract boolean needsBesToMatch();
-    //public abstract boolean needsBesToRespond();
 
 
     public BesApi getBesApi(){

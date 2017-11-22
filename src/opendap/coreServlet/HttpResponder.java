@@ -83,9 +83,7 @@ public abstract class HttpResponder {
 
 
     public boolean matches(String s){
-       Matcher m = getRequestSuffixMatchPattern().matcher(s);
-       return m.matches();
-
+       return getRequestSuffixMatchPattern().matcher(s).matches();
     }
 
 
@@ -94,7 +92,7 @@ public abstract class HttpResponder {
     public String getPathPrefix() { return pathPrefix; }
 
 
-    public abstract ResourceInfo getResourceInfo(String resourceName) throws Exception;
+    // public abstract ResourceInfo getResourceInfo(String resourceName) throws Exception;
     // public abstract long getLastModified(HttpServletRequest request) throws Exception ;
     public abstract void respondToHttpGetRequest(HttpServletRequest request, HttpServletResponse response) throws Exception;
 

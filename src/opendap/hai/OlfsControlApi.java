@@ -110,11 +110,12 @@ public class OlfsControlApi extends HttpResponder {
     }
 
 
+    /*
     @Override
     public ResourceInfo getResourceInfo(String resourceName) throws Exception {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
-
+    */
     /*
     @Override
     public long getLastModified(HttpServletRequest request) throws Exception {

@@ -29,6 +29,7 @@ package opendap.bes.dap4Responders;
 import opendap.bes.BESError;
 import opendap.bes.BESResource;
 import opendap.bes.BadConfigurationException;
+import opendap.bes.PathInfo;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.coreServlet.MimeTypes;
 import opendap.coreServlet.ReqInfo;
@@ -98,15 +99,13 @@ public class FileAccess extends Dap4Responder {
 
     public void sendNormativeRepresentation(HttpServletRequest req, HttpServletResponse response) throws Exception {
 
-        String requestedResourceId = ReqInfo.getLocalUrl(req);
+        String relativeUrl = ReqInfo.getLocalUrl(req);
 
-        String resourceID = getResourceId(requestedResourceId, false);
-
-
-
+        String resourceID = getResourceId(relativeUrl);
 
         BesApi besApi = getBesApi();
 
+        // FIXME -  Pass in PathInfo (or get it from RequestCache) and don't make this call to the BES.
         ResourceInfo dsi = new BESResource(resourceID, besApi);
         if (dsi.sourceExists()) {
             if (!dsi.isNode()) {
@@ -274,15 +273,6 @@ public class FileAccess extends Dap4Responder {
         Element link = getLinkElement(mimeType,href,"The normative form of the "+getServiceTitle());
 
         return link;
-
-    }
-
-    @Override
-    public boolean matches(String relativeUrl){
-
-        log.debug("matches() -    BEGIN");
-
-        return super.matches(relativeUrl);
 
     }
 

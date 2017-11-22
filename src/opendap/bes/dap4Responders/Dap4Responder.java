@@ -328,27 +328,32 @@ public abstract class Dap4Responder extends BesDapResponder  {
     }
 
 
-    /**
-     *
-     * @param requestedResourceId
-     * @return
-     */
-    @Override
-    public boolean matches(String requestedResourceId, boolean checkWithBes) {
 
-        String resourceID = getResourceId(requestedResourceId,checkWithBes);
 
-        boolean result =  resourceID != null;
-
-        return result;
-
-    }
-    public String getResourceId(String requestedResource, boolean checkWithBes){
+    public String getResourceId(String requestedResource){
 
         Pattern suffixPattern = Pattern.compile(_combinedRequestSuffixRegex, Pattern.CASE_INSENSITIVE);
-        return getBesApi().getBesDataSourceID(requestedResource, suffixPattern, checkWithBes);
+        return getBesApi().getBesDataSourceID(requestedResource, suffixPattern);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     }
+
+
+
+
+
 
     /*
 
@@ -400,7 +405,6 @@ public abstract class Dap4Responder extends BesDapResponder  {
     public String getRequestUrlPath(HttpServletRequest req) {
         String forwardRequestUri = (String)req.getAttribute("javax.servlet.forward.request_uri");
         String requestUrl = req.getRequestURL().toString();
-
 
         if(forwardRequestUri != null){
             String server = req.getServerName();
