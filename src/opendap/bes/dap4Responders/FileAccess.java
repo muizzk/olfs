@@ -98,9 +98,9 @@ public class FileAccess extends Dap4Responder {
 
         String resourceID = getResourceId(relativeUrl);
 
-        BesApi besApi = getBesApi();
-
+        // BesApi besApi = getBesApi();
         PathInfo pi = Squeak.besGetPathInfo(relativeUrl);
+
         if( pi.remainder().isEmpty()){ // If the remainder is empty then the thing exists
             if(pi.isFile()){
                 if(pi.isAccessible()){
@@ -140,7 +140,6 @@ public class FileAccess extends Dap4Responder {
         }
 
         /*
-        // FIXME -  Pass in PathInfo (or get it from RequestCache) and don't make this call to the BES.
         ResourceInfo dsi = new BESResource(resourceID, besApi);
         if (dsi.sourceExists()) {
             if (!dsi.isNode()) {

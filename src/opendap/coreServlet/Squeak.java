@@ -468,20 +468,20 @@ public class Squeak extends DispatchServlet {
         HttpServletRequest request;
         PathInfo pathInfo;
         DispatchHandler dispatchHandler;
-
     }
 
     private void getDispatchHandler(gdhParams gdhP)
             throws Exception {
          getDispatchHandler_besInfo(gdhP);
-
     }
 
 
 
     /**
-     * Returns the first handler in the vector of DispatchHandlers that claims
-     * be able to handle the incoming request.
+     * Returns the DispatchHandler that is to process the request. The logic to
+     * deterimine which DH to return is relies on asking the BES for an anaylsis of
+     * the URL path in the context of it's catalog. THis information allows this
+     * code to asses the request and select teh appropriate handler.
      *
      * @param gdhP The request we are looking to handle
      * @return The IsoDispatchHandler that can handle the request, null if no
@@ -491,6 +491,7 @@ public class Squeak extends DispatchServlet {
     private void
     getDispatchHandler_besInfo(gdhParams gdhP) throws Exception {
 
+        // Check cache for object, yada yada
         String dispatchHandlerKey = getClass().getName()+"getDispatchHandler()";
         gdhParams cachedResult  = (gdhParams)RequestCache.get(dispatchHandlerKey);
         if(cachedResult!=null) {
