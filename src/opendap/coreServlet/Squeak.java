@@ -527,20 +527,8 @@ public class Squeak extends DispatchServlet {
             if(remainder.isEmpty()){
                 // This is the easy part, no remainder. It's a simple file or directory in the BES.
                 if(besPathInfo.isFile()){
-                    if(besPathInfo.isData()) {
-                        if(validPath.toLowerCase().endsWith(".ncml")){
-                            // Send to NcmlDatasetDispatcher  because NcML hack...
-                            gdhP.dispatchHandler = _ncmlHandler;
-                        }
-                        else {
-                            // Send to BesDapDispatcher because data visibility is controlled there.
-                            gdhP.dispatchHandler = _dapHandler;
-                        }
-                    }
-                    else {
-                        // Send to FileDispatchHandler
-                        gdhP.dispatchHandler = _fileHandler;
-                    }
+                    // Send to FileDispatchHandler
+                    gdhP.dispatchHandler = _fileHandler;
                 }
                 else if(besPathInfo.isDir()){
                     // Send to directory dispatcher.

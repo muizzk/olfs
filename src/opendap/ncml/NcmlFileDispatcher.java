@@ -142,7 +142,7 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
                               HttpServletResponse response)
             throws Exception {
 
-        sendNcmlResponse(request, response);
+        // sendNcmlResponse(request, response);
 
     }
 
@@ -227,6 +227,7 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
      * @param response
      * @throws Exception
      */
+    /*
     private void sendNcmlResponse(HttpServletRequest request,
                                   HttpServletResponse response)
             throws Exception {
@@ -269,7 +270,7 @@ public class NcmlFileDispatcher implements opendap.coreServlet.DispatchHandler {
     }
 
 
-
+           */
 
 
 }

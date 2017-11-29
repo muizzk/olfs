@@ -31,17 +31,23 @@ import opendap.bes.dap4Responders.MediaType;
 import opendap.coreServlet.*;
 import opendap.dap.Request;
 import opendap.http.error.Forbidden;
+import opendap.http.mediaTypes.TextXml;
 import opendap.io.HyraxStringEncoding;
+import opendap.ppt.PPTException;
+import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.filter.ElementFilter;
+import org.jdom.input.SAXBuilder;
+import org.jdom.output.XMLOutputter;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.Date;
+import java.util.Iterator;
 
 /**
  * Provides access to files held in the BES that the BES does not recognize as data.
@@ -98,12 +104,16 @@ public class FileDispatchHandler implements DispatchHandler {
                               PathInfo pi,
                               HttpServletResponse response)
             throws Exception {
-
-        if(pi.isAccessible()){
-            if(!pi.isData()){
+        if(pi.remainder().isEmpty() && pi.isAccessible()){
+            if(pi.isData()) {
+                if (BesDapDispatcher.allowDirectDataSourceAccess()) {
+                    sendFile(request, response);
+                } else {
+                    throw new Forbidden("Datasets may not be accessed directly.");
+                }
+            }
+            else {
                 sendFile(request, response);
-            }else {
-                throw new Forbidden("Datasets may not be accessed directly.");
             }
         }
         else {
@@ -151,8 +161,69 @@ public class FileDispatchHandler implements DispatchHandler {
 
     }
 
+    /**
+     * This hack fixes the NcML location attributes so they work on the outside of the server.
+     * @param request
+     * @param response
+     * @throws Exception
+     */
+    public void sendNcmlFile(HttpServletRequest request,
+                         HttpServletResponse response)
+            throws Exception {
+
+        String serviceContext = ReqInfo.getFullServiceContext(request);
+        String name = ReqInfo.getLocalUrl(request);
+        Document ncml = getNcmlDocument(name);
+        String besPrefix = _besApi.getBESprefix(name);
+        String location;
+        Element e;
+
+        Iterator i = ncml.getDescendants(new ElementFilter());
+        while(i.hasNext()){
+            e  = (Element) i.next();
+            location = e.getAttributeValue("location");
+            if(location!=null){
+                while(location.startsWith("/"))
+                    location = location.substring(1);
+                location = serviceContext + besPrefix + location;
+                e.setAttribute("location",location);
+            }
+        }
+        XMLOutputter xmlo = new XMLOutputter();
+        MediaType responseMediaType = new TextXml();
+        response.setContentType(responseMediaType.getMimeType());
+        xmlo.output(ncml,response.getOutputStream());
+    }
+
+    private Document getNcmlDocument(String name)
+            throws BESError, IOException, BadConfigurationException, PPTException, JDOMException {
+
+        SAXBuilder sb = new SAXBuilder();
+        Document ncmlDocument;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        _besApi.writeFile(name, baos);
+        ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
+        ncmlDocument = sb.build(is);
+        return ncmlDocument;
+    }
 
     public void sendFile(HttpServletRequest req,
+                         HttpServletResponse response)
+            throws Exception {
+
+        String name = ReqInfo.getLocalUrl(req);
+        if(name.endsWith(".ncml")){
+            sendNcmlFile(req,response);
+        }
+        else {
+            sendRegularFile(req,response);
+        }
+
+    }
+
+
+
+    public void sendRegularFile(HttpServletRequest req,
                          HttpServletResponse response)
             throws Exception {
 
