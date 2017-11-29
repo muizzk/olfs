@@ -27,6 +27,7 @@ package opendap.ncml;
 
 import opendap.bes.BesDapDispatcher;
 import opendap.bes.PathInfo;
+import opendap.bes.dap4Responders.Dap4Responder;
 import opendap.coreServlet.HttpResponder;
 import opendap.coreServlet.ReqInfo;
 import opendap.coreServlet.RequestCache;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,6 +97,12 @@ public class NcmlDatasetDispatcher extends BesDapDispatcher {
     }
 
 
+    @Override
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
+            throws Exception {
+        return requestDispatch(request,pi,null, false);
+    }
+
 
     @Override
     public boolean requestDispatch(HttpServletRequest request,
@@ -103,20 +111,30 @@ public class NcmlDatasetDispatcher extends BesDapDispatcher {
                                    boolean sendResponse)
             throws Exception {
 
-        String relativeUrl = pi.path();
+        String relativeUrl = ReqInfo.getLocalUrl(request);
         log.debug("The client requested this resource: {}",relativeUrl);
         for (HttpResponder r : getResponders()) {
             log.debug("Checking responder: "+ r.getClass().getSimpleName()+ " (pathPrefix: "+r.getPathPrefix()+")");
             String candidateDataSourceId = getBesApi().getBesDataSourceID(relativeUrl,r.getRequestSuffixMatchPattern());
-            if (NcmlManager.isNcmlDataset(candidateDataSourceId)){
-                log.info("The candidateDataSourceId: \"{}\" is an NcmlDataset.", candidateDataSourceId);
-                Pattern p = r.getRequestSuffixMatchPattern();
-                Matcher m = p.matcher(pi.remainder());
-                if(m.matches()){
-                    if (sendResponse){
-                        r.respondToHttpGetRequest(request, response);
+            if(candidateDataSourceId!=null) {
+                String remainder = relativeUrl.substring(candidateDataSourceId.length());
+                if (NcmlManager.isNcmlDataset(candidateDataSourceId)) {
+                    log.info("The candidateDataSourceId: \"{}\" is an NcmlDataset.", candidateDataSourceId);
+                    Pattern p = r.getRequestSuffixMatchPattern();
+                    Matcher m = p.matcher(remainder);
+                    if (m.matches()) {
+                        if (sendResponse) {
+                            if (!response.containsHeader("Last-Modified")) {
+                                log.debug("requestDispatch() - Last-Modified header has not been set. Setting...");
+                                long lmt = NcmlManager.getLastModified(candidateDataSourceId);
+                                SimpleDateFormat httpDateFormat = new SimpleDateFormat(Dap4Responder.HttpDatFormatString);
+                                response.setHeader("Last-Modified", httpDateFormat.format(lmt));
+                                log.debug("requestDispatch() - Last-Modified: {}", httpDateFormat.format(lmt));
+                            }
+                            r.respondToHttpGetRequest(request, response);
+                        }
+                        return true;
                     }
-                    return true;
                 }
             }
         }

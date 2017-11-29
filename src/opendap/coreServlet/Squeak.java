@@ -511,17 +511,20 @@ public class Squeak extends DispatchServlet {
             // has to have a special implementation to support this difference.
             gdhP.pathInfo = new GatewayPathInfo(relativeUrl, _gatewayHandler.getBesGatewayApi());
         }
+        else if (_ncmlHandler.requestCanBeHandled(gdhP.request,null)){
+            gdhP.dispatchHandler = _ncmlHandler;
+        }
+        else if(relativeUrl.startsWith("/thredds")){
+            // Send to StaticCatalogDispatch
+            gdhP.dispatchHandler = _staticThreddsCatalogHandler;
+        }
         else {
             PathInfo besPathInfo = besGetPathInfo(relativeUrl); // This handles the use of the RequestCache
             String remainder = besPathInfo.remainder();
             String validPath = besPathInfo.validPath();
             gdhP.pathInfo = besPathInfo;
 
-            if(relativeUrl.startsWith("/thredds")){
-                // Send to StaticCatalogDispatch
-                gdhP.dispatchHandler = _staticThreddsCatalogHandler;
-            }
-            else  if(remainder.isEmpty()){
+            if(remainder.isEmpty()){
                 // This is the easy part, no remainder. It's a simple file or directory in the BES.
                 if(besPathInfo.isFile()){
                     if(besPathInfo.isData()) {
