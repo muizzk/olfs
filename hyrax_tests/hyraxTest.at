@@ -620,7 +620,7 @@ AT_CURL_RESPONSE_AND_HTTP_HEADER_TEST(errors/bes_timeout_error.json)
 
 
 ####################################################
-# TestName: wcs/bes_forbidden_error
+# TestName: wcs
 AT_CURL_RESPONSE_TEST(wcs-2.0/coads_climatology.nc.GetCapabilities)
 AT_CURL_RESPONSE_TEST(wcs-2.0/coads_climatology.nc.DescribeCoverage_00)
 AT_CURL_RESPONSE_TEST(wcs-2.0/coads_climatology.nc.DescribeCoverage_01)
@@ -628,3 +628,15 @@ AT_CURL_DAP2_DATA_RESPONSE_TEST(wcs-2.0/coads_climatology.nc.GetCoverage)
 
 
 
+####################################################
+# TestName: ncml_file
+AT_CURL_RESPONSE_TEST(ncml_file/fnoc1_improved.ncml)
+AT_CURL_RESPONSE_TEST(ncml_file/aggExisting.ncml)
+AT_CURL_RESPONSE_TEST(ncml_file/joinNew_grid.ncml)
+
+
+####################################################
+# TestName: static_thredds/catalog_ncml
+# User supplied (static) THREDDS catalogs may contain
+# NcML datasets. These are sent tot the BES for processing
+AT_CURL_RESPONSE_TEST(static_thredds/catalog_ncml.dds,xfail)
