@@ -640,3 +640,9 @@ AT_CURL_RESPONSE_TEST(ncml_file/joinNew_grid.ncml)
 # User supplied (static) THREDDS catalogs may contain
 # NcML datasets. These are sent tot the BES for processing
 AT_CURL_RESPONSE_TEST(static_thredds/catalog_ncml.dds,xfail)
+
+####################################################
+# TestName: dap4/dap4_file_response
+# Tests the DAP4 ".file" response.
+AT_CURL_RESPONSE_TEST(dap4/dap4_file_response)
+

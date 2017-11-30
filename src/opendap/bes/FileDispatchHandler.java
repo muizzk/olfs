@@ -61,6 +61,8 @@ public class FileDispatchHandler implements DispatchHandler {
 
     private BesApi _besApi;
 
+    public static final String FILE_SUFFIX = ".file";
+
     public FileDispatchHandler() {
         log = org.slf4j.LoggerFactory.getLogger(getClass());
         initialized = false;
@@ -84,7 +86,8 @@ public class FileDispatchHandler implements DispatchHandler {
     public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi)
             throws Exception {
 
-        return !pi.remainder().isEmpty() || !pi.isFile();
+        throw new Exception("Trying never to use this method");
+        // return !pi.remainder().isEmpty() || !pi.isFile();
     }
 
 
@@ -104,7 +107,8 @@ public class FileDispatchHandler implements DispatchHandler {
                               PathInfo pi,
                               HttpServletResponse response)
             throws Exception {
-        if(pi.remainder().isEmpty() && pi.isAccessible()){
+
+        if(pi.isAccessible()){
             if(pi.isData()) {
                 if (BesDapDispatcher.allowDirectDataSourceAccess()) {
                     sendFile(request, response);
@@ -163,16 +167,15 @@ public class FileDispatchHandler implements DispatchHandler {
 
     /**
      * This hack fixes the NcML location attributes so they work on the outside of the server.
-     * @param request
-     * @param response
+     * @param name The name of the NcML file to send.
+     * @param response The respomse object for this request
      * @throws Exception
      */
-    public void sendNcmlFile(HttpServletRequest request,
+    public void sendNcmlFile(String name,
+                             String serviceContext,
                          HttpServletResponse response)
             throws Exception {
 
-        String serviceContext = ReqInfo.getFullServiceContext(request);
-        String name = ReqInfo.getLocalUrl(request);
         Document ncml = getNcmlDocument(name);
         String besPrefix = _besApi.getBESprefix(name);
         String location;
@@ -195,6 +198,16 @@ public class FileDispatchHandler implements DispatchHandler {
         xmlo.output(ncml,response.getOutputStream());
     }
 
+    /**
+     * Retrieves and parses an NcML (well, an XML doc but..)
+     * @param name The name of the file
+     * @return The NcML DOM
+     * @throws BESError
+     * @throws IOException
+     * @throws BadConfigurationException
+     * @throws PPTException
+     * @throws JDOMException
+     */
     private Document getNcmlDocument(String name)
             throws BESError, IOException, BadConfigurationException, PPTException, JDOMException {
 
@@ -207,29 +220,40 @@ public class FileDispatchHandler implements DispatchHandler {
         return ncmlDocument;
     }
 
+    /**
+     * Send s a file to the client.
+     * @param req
+     * @param response
+     * @throws Exception
+     */
     public void sendFile(HttpServletRequest req,
                          HttpServletResponse response)
             throws Exception {
 
         String name = ReqInfo.getLocalUrl(req);
+        if(name.endsWith(FILE_SUFFIX))  {
+            name = name.substring(0,name.lastIndexOf(FILE_SUFFIX));
+        }
+
         if(name.endsWith(".ncml")){
-            sendNcmlFile(req,response);
+            String serviceContext = ReqInfo.getFullServiceContext(req);
+            sendNcmlFile(name, serviceContext,response);
         }
         else {
-            sendRegularFile(req,response);
+            sendRegularFile(name,response);
         }
 
     }
 
 
-
-    public void sendRegularFile(HttpServletRequest req,
-                         HttpServletResponse response)
+    /**
+     * Snds a file to the client
+     * @param name
+     * @param response
+     * @throws Exception
+     */
+    private void sendRegularFile(String name, HttpServletResponse response)
             throws Exception {
-
-
-        String name = ReqInfo.getLocalUrl(req);
-
 
         log.debug("sendFile(): Sending file \"" + name + "\"");
 
@@ -242,7 +266,8 @@ public class FileDispatchHandler implements DispatchHandler {
         //String contentDisposition = " attachment; filename=\"" +downloadFileName+"\"";
         //response.setHeader("Content-Disposition",contentDisposition);
 
-        String suffix = ReqInfo.getRequestSuffix(req);
+        String suffix = ReqInfo.getSuffix(name);
+        log.debug("suffix: " + suffix);
 
         if (suffix != null) {
             MediaType responseMediaType = MimeTypes.getMediaType(suffix);

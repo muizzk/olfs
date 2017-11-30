@@ -237,31 +237,24 @@ public class Squeak extends DispatchServlet {
     public void doGet(HttpServletRequest request,
                       HttpServletResponse response) {
 
-
-
         String relativeUrl = ReqInfo.getLocalUrl(request);
         int request_status = HttpServletResponse.SC_OK;
         try {
             Procedure timedProcedure = Timer.start();
             RequestCache.openThreadCache();
             try {
-
                 if(LicenseManager.isExpired(request)){
                     LicenseManager.sendLicenseExpiredPage(request,response);
                     return;
                 }
                 int reqno = reqNumber.incrementAndGet();
                 LogUtil.logServerAccessStart(request, "HyraxAccess", "HTTP-GET", Long.toString(reqno));
-
                 _log.debug(Util.getMemoryReport());
-
                 _log.debug(ServletUtil.showRequest(request, reqno));
                 //log.debug(AwsUtil.probeRequest(this, request));
 
-
                 if(redirectForServiceOnlyRequest(request,response))
                     return;
-
 
                 _log.debug("Requested relative URL: '" + relativeUrl +
                         "' suffix: '" + ReqInfo.getRequestSuffix(request) +
@@ -284,8 +277,6 @@ public class Squeak extends DispatchServlet {
             finally {
                 Timer.stop(timedProcedure);
             }
-
-
         }
         catch (Throwable t) {
             try {
@@ -309,7 +300,6 @@ public class Squeak extends DispatchServlet {
             RequestCache.closeThreadCache();
             _log.info("doGet(): Response completed.\n");
         }
-
         _log.info("doGet() - Timing Report: \n{}", Timer.report());
         Timer.reset();
     }
@@ -319,10 +309,7 @@ public class Squeak extends DispatchServlet {
     private boolean redirectForServiceOnlyRequest(HttpServletRequest req,
                                                   HttpServletResponse res)
             throws IOException {
-
-
         // log.debug(ServletUtil.probeRequest(this, req));
-
         if (ReqInfo.isServiceOnlyRequest(req)) {
             String reqURI = req.getRequestURI();
             String newURI = reqURI+"/";
@@ -345,19 +332,12 @@ public class Squeak extends DispatchServlet {
 
         String relativeUrl = ReqInfo.getLocalUrl(request);
         int request_status = HttpServletResponse.SC_OK;
-
         try {
             try {
-
                 RequestCache.openThreadCache();
-
                 int reqno = reqNumber.incrementAndGet();
-
                 LogUtil.logServerAccessStart(request, "HyraxAccess", "HTTP-POST", Long.toString(reqno));
-
                 _log.debug(ServletUtil.showRequest(request, reqno));
-
-
                 _log.debug("Requested relative URL: '" + relativeUrl +
                         "' suffix: '" + ReqInfo.getRequestSuffix(request) +
                         "' CE: '" + ReqInfo.getConstraintExpression(request) + "'");
@@ -375,14 +355,10 @@ public class Squeak extends DispatchServlet {
                     //send404(request,response);
                     throw  new OPeNDAPException(HttpServletResponse.SC_NOT_FOUND, "Failed to locate resource: "+relativeUrl);
                 }
-
-
-
             }
             finally {
                 _log.info("doPost(): Response completed.\n");
             }
-
         } catch (Throwable t) {
             try {
                 request_status = OPeNDAPException.anyExceptionHandler(t, this, response);
@@ -400,8 +376,6 @@ public class Squeak extends DispatchServlet {
             LogUtil.logServerAccessEnd(request_status, "HyraxAccess");
             RequestCache.closeThreadCache();
         }
-
-
     }
 
 
@@ -416,15 +390,11 @@ public class Squeak extends DispatchServlet {
      */
     @Override
     protected long getLastModified(HttpServletRequest req) {
-
-
         RequestCache.openThreadCache();
-
         long reqno = reqNumber.incrementAndGet();
         LogUtil.logServerAccessStart(req, "HyraxAccess", "LAST-MOD", Long.toString(reqno));
 
         long lmt = -1;
-
         Procedure timedProcedure = Timer.start();
         try {
             if (ReqInfo.isServiceOnlyRequest(req)) {
@@ -450,7 +420,6 @@ public class Squeak extends DispatchServlet {
         } finally {
             LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "HyraxAccess");
             Timer.stop(timedProcedure);
-
         }
         return lmt;
     }
@@ -551,6 +520,10 @@ public class Squeak extends DispatchServlet {
                 else if( remainder.endsWith("catalog.xml")){
                     // Send to BESThreddsDispatchHandler
                     gdhP.dispatchHandler =  _besThreddsHandler;
+                }
+                else if( remainder.equals(FileDispatchHandler.FILE_SUFFIX)){
+                    // It's a DAP4 file request.
+                    gdhP.dispatchHandler =  _fileHandler;
                 }
                 else {
                     // Looks like DAP request - send to BesDapDispatcher
