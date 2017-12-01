@@ -43,6 +43,8 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -244,14 +246,11 @@ public class BesGatewayApi extends BesApi {
         e.setText(contentID);
         getReq.addContent(e);
 
-
         e = new Element("mimeBoundary",BES.BES_NS);
         e.setText(mimeBoundary);
         getReq.addContent(e);
 
-
         return reqDoc;
-
     }
 
     /*
@@ -274,16 +273,13 @@ public class BesGatewayApi extends BesApi {
 
     String stripPrefix(String dataSource){
 
-
         while(dataSource.startsWith("/") && !dataSource.equals("/"))
             dataSource = dataSource.substring(1,dataSource.length());
-
 
         if(dataSource.startsWith(_servicePrefix))
             return dataSource.substring(_servicePrefix.length(),dataSource.length());
 
         return dataSource;
-
     }
 
 
@@ -318,35 +314,20 @@ public class BesGatewayApi extends BesApi {
 
 
     }
-    @Override
-    public PathInfo getBesPathInfo(String path)
-            throws PPTException,
-            BadConfigurationException,
-            IOException,
-            JDOMException, BESError {
-        
-        String resourceId = getBesDataSourceID(path, stripDotSuffixPattern);
-        return super.getBesPathInfo(resourceId);
-    }
 
 
     @Override
     public void getBesCatalog(String dataSourceUrl, Document response) throws IOException {
-
-
         // Go get the HEAD for the catalog:
         HttpClient httpClient = new HttpClient();
         HeadMethod headReq = new HeadMethod(dataSourceUrl);
-
         try {
             int statusCode = httpClient.executeMethod(headReq);
-
             if (statusCode != HttpStatus.SC_OK) {
                 _log.error("Unable to HEAD remote resource: " + dataSourceUrl);
                 String msg = "OLFS: Unable to access requested resource: " + dataSourceUrl;
                 throw new OPeNDAPException(statusCode,msg);
             }
-
             Header lastModifiedHeader = headReq.getResponseHeader("Last-Modified");
             Date lastModified = new Date();
 
@@ -359,7 +340,6 @@ public class BesGatewayApi extends BesApi {
                     _log.warn("Failed to parse last modified time. LMT String: {}, resource URL: {}", lmtString, dataSourceUrl);
                 }
             }
-
             int size = -1;
             Header contentLengthHeader = headReq.getResponseHeader("Content-Length");
 
@@ -371,68 +351,38 @@ public class BesGatewayApi extends BesApi {
                     _log.warn("Received invalid content length from datasource: {}: ", dataSourceUrl);
                 }
             }
-
             Element catalogElement = getShowCatalogResponseDocForDatasetUrl(dataSourceUrl, size, lastModified);
-
-
             response.detachRootElement();
             response.setRootElement(catalogElement);
-
-
         } catch (Exception e) {
             _log.warn("Unable to HEAD the remote resource: {} Error Msg: {}", dataSourceUrl, e.getMessage());
         }
-
-
         Element catalogElement = getShowCatalogResponseDocForDatasetUrl("", 0, new Date());
-
         response.detachRootElement();
         response.setRootElement(catalogElement);
-
-
     }
 
 
 
     public Element getShowCatalogResponseDocForDatasetUrl(String dataSourceURL, int size, Date lastModified){
-
-
-
         Element root = new Element("response",BES.BES_NS);
         root.addNamespaceDeclaration(BES.BES_NS);
         root.setAttribute("reqID","BesGatewayApi_Construct");
 
-
         Element showCatalog = new Element("showCatalog",BES.BES_NS);
         root.addContent(showCatalog);
-
         if(dataSourceURL!=null && dataSourceURL.length()>0){
-
             Element dataset = new Element("dataset",BES.BES_NS);
             showCatalog.addContent(dataset);
-
             dataset.setAttribute("name",dataSourceURL);
             dataset.setAttribute("size",""+size);
-
             SimpleDateFormat sdf = new SimpleDateFormat(opendap.bes.BES.DATE_FORMAT);
-
             dataset.setAttribute("lastModified",sdf.format(lastModified));
-
-
             dataset.setAttribute("node","false");
-
-
-
             Element serviceRef = new Element("serviceRef",BES.BES_NS);
             serviceRef.setText("dap");
-
             dataset.addContent(serviceRef);
-
         }
-
-
         return root;
     }
-
-
 }

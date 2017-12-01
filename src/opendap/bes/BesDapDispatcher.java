@@ -373,6 +373,7 @@ public class BesDapDispatcher implements DispatchHandler {
             throws Exception {
 
 
+        //FIXME drop this check it hapens in the Squeak/DispatchServlet
         _log.debug("The client requested this resource: {}", pi.path());
         if(pi.path().endsWith("contents.html") ||
                 pi.path().endsWith("catalog.html") ||

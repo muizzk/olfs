@@ -64,7 +64,18 @@ public class PathInfo {
     protected long _size;
 
     protected PathInfo(){
-
+        _path = null;
+        _pathInfoElement = null;
+        _validPath = null;
+        _validPathElement =null;
+        _remainder = null;
+        _remainderElement = null;
+        _isDir = false;
+        _isFile = false;
+        _isData = false;
+        _canAccess = false;
+        _lmt = null;
+        _size = -1;
     }
 
     public PathInfo(Element piElement) throws IOException {

@@ -25,10 +25,13 @@
  */
 package opendap.gateway;
 
+import opendap.bes.BESError;
+import opendap.bes.BadConfigurationException;
 import opendap.bes.PathInfo;
 import opendap.coreServlet.*;
 import opendap.http.error.BadRequest;
 import opendap.logging.LogUtil;
+import opendap.ppt.PPTException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -43,6 +46,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -176,18 +180,26 @@ public class DispatchServlet extends HttpServlet {
 
         long reqno = reqNumber.incrementAndGet();
         LogUtil.logServerAccessStart(req, "GATEWAY_SERVICE_ACCESS", "LastModified", Long.toString(reqno));
+        int status = HttpServletResponse.SC_OK;
         try {
 
             if (ReqInfo.isServiceOnlyRequest(req))
-                return -1;
+                return new Date().getTime();
+
 
             GatewayPathInfo gpi = _gatewayDispatchHandler.getGateWayPathInfo(req);
             return _gatewayDispatchHandler.getLastModified(gpi);
 
         }
+        catch (Exception e) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Caught ").append(e.getClass().getName()).append(" message: ").append(e.getMessage());
+            log.error(sb.toString());
+            status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+            return new Date().getTime();
+        }
         finally {
-            LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "GATEWAY_SERVICE_ACCESS");
-
+            LogUtil.logServerAccessEnd(status, "GATEWAY_SERVICE_ACCESS");
         }
 
 

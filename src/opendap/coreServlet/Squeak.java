@@ -28,6 +28,7 @@ package opendap.coreServlet;
 
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
@@ -394,7 +395,7 @@ public class Squeak extends DispatchServlet {
         long reqno = reqNumber.incrementAndGet();
         LogUtil.logServerAccessStart(req, "HyraxAccess", "LAST-MOD", Long.toString(reqno));
 
-        long lmt = -1;
+        long lmt = new Date().getTime();
         Procedure timedProcedure = Timer.start();
         try {
             if (ReqInfo.isServiceOnlyRequest(req)) {
@@ -416,7 +417,6 @@ public class Squeak extends DispatchServlet {
             }
         } catch (Exception e) {
             _log.error("getLastModifiedTime() - Caught " + e.getClass().getName() + " msg: " + e.getMessage());
-            lmt = -1;
         } finally {
             LogUtil.logServerAccessEnd(HttpServletResponse.SC_OK, "HyraxAccess");
             Timer.stop(timedProcedure);
@@ -478,7 +478,9 @@ public class Squeak extends DispatchServlet {
             // And since Gateway only uses the BES to service remote resources
             // rather than files on the BES filesystem the PathInfo object
             // has to have a special implementation to support this difference.
-            gdhP.pathInfo = new GatewayPathInfo(relativeUrl, _gatewayHandler.getBesGatewayApi());
+            // So we don't need to bother getting/setting the PathInfo yet
+            // gdhP.pathInfo = new GatewayPathInfo(relativeUrl, _gatewayHandler.getBesGatewayApi());
+            gdhP.pathInfo = new GatewayPathInfo(relativeUrl,_gatewayHandler.getBesGatewayApi());
         }
         else if (_ncmlHandler.requestCanBeHandled(gdhP.request,null)){
             gdhP.dispatchHandler = _ncmlHandler;

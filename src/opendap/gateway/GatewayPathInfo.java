@@ -26,28 +26,39 @@
 
 package opendap.gateway;
 
+import opendap.bes.BESError;
+import opendap.bes.BadConfigurationException;
+import opendap.bes.BesDapDispatcher;
 import opendap.bes.PathInfo;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.coreServlet.ReqInfo;
+import opendap.ppt.PPTException;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 public class GatewayPathInfo extends PathInfo {
     BesGatewayApi _besApi;
-    GatewayPathInfo(){
+
+    public GatewayPathInfo(){
         super();
     }
 
-    public GatewayPathInfo(HttpServletRequest req, BesGatewayApi besApi){
-        this(ReqInfo.getLocalUrl(req),besApi);
+    public GatewayPathInfo(Element pathInfoElement) throws IOException {
+        super(pathInfoElement);
     }
 
-    
-    public GatewayPathInfo(String path, BesGatewayApi besApi){
+
+    public GatewayPathInfo(String urlPath, BesGatewayApi besApi) throws JDOMException, BadConfigurationException, PPTException, BESError, IOException {
         this();
         _besApi = besApi;
         // FIXME! MAKE SURE THIS WORKS! MAY NEED TO POPULATE OTHER VALUES!
-        _path =  _besApi.getBesDataSourceID(path, BesGatewayApi.stripDotSuffixPattern);
+        _path = urlPath;
+        if(_path.contains("."))
+            _path =  _besApi.getBesDataSourceID(_path, BesGatewayApi.stripDotSuffixPattern);
+
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // THIS IS A HACK TO MAKE THIS WORK WITHOUT A GATEWAY SPECIFIC showPathInfo BES command.
@@ -57,11 +68,16 @@ public class GatewayPathInfo extends PathInfo {
         ////////////////////////////////////////////////////////////////////////////////////////
 
         _remainder = "";
-        if(path.contains("."))
-            _remainder = path.substring(path.indexOf('.'));
+        if(urlPath.contains("."))
+            _remainder = urlPath.substring(urlPath.indexOf('.'));
 
-        _isFile = true;
-        _isData = true;
+        PathInfo pathInfo = _besApi.getGatewayPathInfo(_path);
+
+        _isFile = pathInfo.isFile();
+        _isData = pathInfo.isData();
+        _isDir = pathInfo.isDir();
+        _canAccess = pathInfo.isAccessible();
+        _lmt = pathInfo.lastModified();
     }
 
 

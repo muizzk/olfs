@@ -28,8 +28,9 @@ package opendap.bes.dap2Responders;
 
 import opendap.bes.*;
 import opendap.bes.caching.BesCatalogCache;
-import opendap.coreServlet.ResourceInfo;
 import opendap.dap4.QueryParameters;
+import opendap.gateway.GatewayPathInfo;
+import opendap.io.HyraxStringEncoding;
 import opendap.logging.Procedure;
 import opendap.logging.Timer;
 import opendap.ppt.PPTException;
@@ -41,7 +42,6 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -91,6 +91,7 @@ public class BesApi {
     public static final String W10N_TRAVERSE   = "w10nTraverse";
 
     public static final String SHOW_PATH_INFO  = "showPathInfo";
+    public static final String SHOW_GATEWAY_PATH_INFO  = "showGatewayPathInfo";
 
     public static final String REQUEST_ID      = "reqID";
 
@@ -714,15 +715,37 @@ public class BesApi {
      * @throws IOException               .
      * @throws PPTException              .
      */
-    public void writePathInfoResponse(String dataSource,
+    public void writeBesPathInfoResponse(String dataSource,
+                                         OutputStream os)
+            throws BadConfigurationException, BESError, IOException, PPTException {
+
+        besTransaction(
+                dataSource,
+                getShowBesPathInfoRequestDocument(dataSource),
+                os);
+    }
+
+    /**
+     * Writes the NetCDF file out response for the dataSource to the passed
+     * stream.
+     *
+     * @param dataSource The requested DataSource
+     * @param os         The Stream to which to write the response.
+     * @throws BadConfigurationException .
+     * @throws BESError                  .
+     * @throws IOException               .
+     * @throws PPTException              .
+     */
+    public void writeGatewayPathInfoResponse(String dataSource,
                                       OutputStream os)
             throws BadConfigurationException, BESError, IOException, PPTException {
 
         besTransaction(
                 dataSource,
-                getShowPathInfoRequestDocument(dataSource),
+                getShowGatewayPathInfoRequestDocument(dataSource),
                 os);
     }
+
 
     public void writeW10nPathInfoResponse(String dataSource,
                                       OutputStream os)
@@ -741,7 +764,7 @@ public class BesApi {
             JDOMException, BESError {
 
         ByteArrayOutputStream pathInfoDocString = new ByteArrayOutputStream();
-        writePathInfoResponse(path,pathInfoDocString);
+        writeBesPathInfoResponse(path,pathInfoDocString);
 
 
         SAXBuilder sb = new SAXBuilder();
@@ -762,6 +785,40 @@ public class BesApi {
 
         pathInfoElement.detach();
         PathInfo pathInfo = new PathInfo(pathInfoElement);
+        return pathInfo;
+    }
+
+
+
+    public GatewayPathInfo getGatewayPathInfo(String path)
+            throws PPTException,
+            BadConfigurationException,
+            IOException,
+            JDOMException, BESError {
+
+        ByteArrayOutputStream pathInfoDocString = new ByteArrayOutputStream();
+        writeGatewayPathInfoResponse(path,pathInfoDocString);
+
+        log.debug("getGatewayPathInfo() - Received this from BES: \n{}",pathInfoDocString.toString(HyraxStringEncoding.getCharset().name()));
+
+        SAXBuilder sb = new SAXBuilder();
+
+        Document pathInfoResponseDoc = sb.build(new ByteArrayInputStream(pathInfoDocString.toByteArray()));
+
+        Element root = pathInfoResponseDoc.getRootElement();
+
+        Element spiElement = root.getChild(SHOW_GATEWAY_PATH_INFO,BES_NS);
+        if(spiElement==null)
+            throw new IOException("The BES returned an invalid response to "+SHOW_GATEWAY_PATH_INFO+" command." +
+                    " Missing "+SHOW_GATEWAY_PATH_INFO+" element in response.");
+
+        Element pathInfoElement = spiElement.getChild(PathInfo.PATH_INFO,BES_NS);
+        if(pathInfoElement==null)
+            throw new IOException("The BES returned an invalid response to "+SHOW_GATEWAY_PATH_INFO+" command." +
+                    " Missing "+PathInfo.PATH_INFO+" element in response.");
+
+        pathInfoElement.detach();
+        GatewayPathInfo pathInfo = new GatewayPathInfo(pathInfoElement);
         return pathInfo;
     }
 
@@ -2384,38 +2441,49 @@ public class BesApi {
     }
 
 
-    public  Document getShowPathInfoRequestDocument(String dataSource)
-                throws BadConfigurationException {
-
+    public  Document getShowBesPathInfoRequestDocument(String dataSource)
+            throws BadConfigurationException {
 
         String besDataSource = getBES(dataSource).trimPrefix(dataSource);
-
-
         Element request = new Element("request", BES_NS);
         request.setAttribute(REQUEST_ID,getRequestIdBase());
-
         request.addContent(setContextElement(EXPLICIT_CONTAINERS_CONTEXT,"no"));
         request.addContent(setContextElement(ERRORS_CONTEXT,XML_ERRORS));
-        //request.addContent(w10nRequestElement(besDataSource,queryString,mediaType,maxResponseSize));
-
-
-
-        request.addContent(showPathInfoRequestElement(besDataSource));
+        request.addContent(showBesPathInfoRequestElement(besDataSource));
 
         XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
-        log.debug("getShowPathInfoRequestDocument() - Document\n {}",xmlo.outputString(request));
+        log.debug("getShowBesPathInfoRequestDocument() - Document\n {}",xmlo.outputString(request));
 
         return new Document(request);
 
     }
-
-
-    public Element showPathInfoRequestElement(String resource) {
+    public Element showBesPathInfoRequestElement(String resource) {
         Element e;
         Element spi = new Element(SHOW_PATH_INFO,BES_NS);
-
         spi.setAttribute("node", resource);
+        return spi;
+    }
 
+
+    public  Document getShowGatewayPathInfoRequestDocument(String dataSource)
+            throws BadConfigurationException {
+
+        String besDataSource = getBES(dataSource).trimPrefix(dataSource);
+        Element request = new Element("request", BES_NS);
+        request.setAttribute(REQUEST_ID,getRequestIdBase());
+        request.addContent(setContextElement(EXPLICIT_CONTAINERS_CONTEXT,"no"));
+        request.addContent(setContextElement(ERRORS_CONTEXT,XML_ERRORS));
+        request.addContent(showGatewayPathInfoRequestElement(besDataSource));
+        XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
+        log.debug("getShowBesPathInfoRequestDocument() - Document\n {}",xmlo.outputString(request));
+        return new Document(request);
+
+    }
+
+    public Element showGatewayPathInfoRequestElement(String resource) {
+        Element e;
+        Element spi = new Element(SHOW_GATEWAY_PATH_INFO,BES_NS);
+        spi.setAttribute("node", resource);
         return spi;
     }
 
@@ -2434,7 +2502,7 @@ public class BesApi {
         request.addContent(showW10nPathInfoRequestElement(besDataSource));
 
         XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
-        log.debug("getShowPathInfoRequestDocument() - Document\n {}",xmlo.outputString(request));
+        log.debug("getShowBesPathInfoRequestDocument() - Document\n {}",xmlo.outputString(request));
 
         return new Document(request);
 

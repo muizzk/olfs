@@ -339,15 +339,6 @@ public abstract class Dap4Responder extends BesDapResponder  {
 
 
 
-
-
-
-
-
-
-
-
-
     }
 
 

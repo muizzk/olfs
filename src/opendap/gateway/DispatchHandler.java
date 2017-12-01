@@ -26,17 +26,22 @@
 
 package opendap.gateway;
 
+import opendap.bes.BESError;
+import opendap.bes.BadConfigurationException;
 import opendap.bes.BesDapDispatcher;
 import opendap.bes.PathInfo;
 import opendap.coreServlet.ReqInfo;
 import opendap.coreServlet.RequestCache;
 import opendap.coreServlet.Util;
+import opendap.ppt.PPTException;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -87,29 +92,29 @@ public class DispatchHandler extends BesDapDispatcher {
 
         _besApi = new BesGatewayApi(_prefix);
         init(servlet, config, _besApi);
-        _gatewayForm  =  new GatewayForm(getSystemPath(), _prefix);
+        _gatewayForm = new GatewayForm(getSystemPath(), _prefix);
     }
 
 
-    public BesGatewayApi getBesGatewayApi(){
+    public BesGatewayApi getBesGatewayApi() {
         return _besApi;
     }
 
 
     @Override
-    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi){
+    public boolean requestCanBeHandled(HttpServletRequest request, PathInfo pi) {
         boolean isMyRequest = false;
 
         String relativeURL = pi.path();
-        log.debug("relativeURL:    "+relativeURL);
+        log.debug("relativeURL:    " + relativeURL);
         if (relativeURL != null) {
-            while(relativeURL.startsWith("/") && relativeURL.length()>1)
-                relativeURL = relativeURL.substring(1,relativeURL.length());
+            while (relativeURL.startsWith("/") && relativeURL.length() > 1)
+                relativeURL = relativeURL.substring(1, relativeURL.length());
 
             boolean itsJustThePrefixWithoutTheSlash =
-                    _prefix.substring(0,_prefix.lastIndexOf("/")).equals(relativeURL);
-            
-            if (relativeURL.startsWith(_prefix) || itsJustThePrefixWithoutTheSlash ) {
+                    _prefix.substring(0, _prefix.lastIndexOf("/")).equals(relativeURL);
+
+            if (relativeURL.startsWith(_prefix) || itsJustThePrefixWithoutTheSlash) {
                 isMyRequest = true;
             }
         }
@@ -121,12 +126,9 @@ public class DispatchHandler extends BesDapDispatcher {
             HttpServletRequest request,
             PathInfo pi,
             HttpServletResponse response)
-        throws Exception {
+            throws Exception {
 
-        log.debug("handleRequest() - pi is an instance of {}",pi.getClass().getName());
-
-        log.info("handleRequest() - Sending Gateway Response");
-        String relativeURL = pi.path();
+        String relativeURL = ReqInfo.getLocalUrl(request);
 
         log.debug("handleRequest() - relativeURL:    "+relativeURL);
         if (relativeURL != null) {
@@ -141,14 +143,15 @@ public class DispatchHandler extends BesDapDispatcher {
             if (itsJustThePrefixWithoutTheSlash) {
                 response.sendRedirect(_prefix);
                 log.debug("handleRequest() - Sent redirect to service prefix: " + _prefix);
-            } else if (itsJustThePrefix) {
+            }
+            else if (itsJustThePrefix) {
 
                 _gatewayForm.respondToHttpGetRequest(request, response);
                 log.info("handleRequest() - Sent Gateway Access Form");
 
-            } else {
-                GatewayPathInfo gpi = new GatewayPathInfo( pi.path(), _besApi);
-                if (!super.requestDispatch(request, gpi, response, true) && !response.isCommitted()) {
+            }
+            else {
+                if (!super.requestDispatch(request, pi, response, true) && !response.isCommitted()) {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unable to locate requested resource.");
                     log.info("handleRequest() - Sent 404 Response.");
                 } else
@@ -159,12 +162,12 @@ public class DispatchHandler extends BesDapDispatcher {
     }
 
 
-    public GatewayPathInfo getGateWayPathInfo(HttpServletRequest req){
+    public GatewayPathInfo getGateWayPathInfo(HttpServletRequest req) throws JDOMException, BadConfigurationException, PPTException, BESError, IOException {
         String relativeUrl = ReqInfo.getLocalUrl(req);
         return getGateWayPathInfo(relativeUrl);
     }
 
-    public GatewayPathInfo getGateWayPathInfo(String resourcePath) {
+    public GatewayPathInfo getGateWayPathInfo(String resourcePath) throws JDOMException, BadConfigurationException, PPTException, IOException, BESError {
         GatewayPathInfo gpi;
         String cacheKey = PathInfo.getCacheKey(resourcePath);
         gpi = (GatewayPathInfo) RequestCache.get(cacheKey);
