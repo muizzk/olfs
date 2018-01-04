@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.63)
 
-AC_INIT(OLFS, 1.17.0, support@opendap.org)
+AC_INIT([OLFS], [1.17.0], [support@opendap.org])
 AC_CONFIG_SRCDIR([configure.ac])
 
 dnl This tells autoconf/make to use the directory 'conf' to hold
@@ -11,9 +11,9 @@ dnl m4 macro files and various scripts.
 AC_CONFIG_AUX_DIR([conf])
 AC_CONFIG_MACRO_DIR([conf])
 
-dnl Require automake 1.10. This can be a list of space separated options
+dnl Require automake 1.11. This can be a list of space separated options
 dnl that are passed to every Makefile.am
-AM_INIT_AUTOMAKE([1.10])
+AM_INIT_AUTOMAKE([1.11])
 
 dnl Example of an --enable-<feature> switch. 
 dnl dnl AC_ARG_ENABLE([developer],
@@ -28,7 +28,7 @@ dnl    AC_DEFINE([NDEBUG], [1], [Define this to suppress assert() statements.])]
 
 dnl Example of a --with-<feature> switch.
 dnl AC_ARG_WITH([dap-modules],
-dnl   [AS_HELP_STRING([--without-dap-modules], [don't build the bundled dap modules (default is to build the modules)])],
+dnl   [AS_HELP_STRING([--without-dap-modules], [do not build the bundled dap modules (default is to build the modules)])],
 dnl   [with_dap_modules=${withval} ],
 dnl   [with_dap_modules=yes])
 
