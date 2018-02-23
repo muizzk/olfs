@@ -1,0 +1,41 @@
+#!/bin/bash
+
+test_name="./hyraxTest"
+
+test_count=`grep -e "^AT_CURL_.*" hyraxTest.at | wc -l | tr -d '[:blank:]' `
+
+echo "There are currently ${test_count} active tests defined."
+
+digits=`echo -n ${test_count} | wc -c | tr -d '[:blank:]' `
+
+echo "That's ${digits} digits..."
+
+for i in "$@"
+do
+    echo "----------------------------------------------------------------------------------------------------------"
+    echo "----------------------------------------------------------------------------------------------------------"
+    echo "------------------------------------- RUNNING TEST "`printf %0${digits}d $i`" ---------------------------------------------------"
+    echo "----------------------------------------------------------------------------------------------------------"
+    echo "----------------------------------------------------------------------------------------------------------"
+
+    $test_name $i  2>&1  > $0.log
+
+    test_num=`printf %0${digits}d $i`
+    echo "test_num: ${test_num}"
+
+    result="${test_name}.dir/${test_num}/stdout"
+    echo "result: ${result}"
+    
+    baseline=`grep "$i:" $0.log | awk '{ name=$3; n=gsub("\\\\$abs_srcdir/","",name); print name".baseline"}' - `
+    echo "baseline: ${baseline}"
+
+    
+    
+    echo "----------------------------------------------- ${result} -----------------------------------------------"
+    cat ${result}
+    echo "----------------------------------------------- ${baseline} -----------------------------------------------"
+    cat ${baseline}
+    echo "----------------------------------------------- DIFF ${result}  ${baseline} -----------------------------------------------"
+    diff $result $baseline
+    
+done

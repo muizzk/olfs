@@ -53,41 +53,31 @@ import java.util.Vector;
  */
 public class DispatchHandler extends BesDapDispatcher {
 
-
     private Logger log;
     private boolean _initialized;
     private String _prefix = "gateway/";
-
-    // private Element _config;
-
-    private Vector<String> trustedHosts;
-
-
     private BesGatewayApi _besApi;
-
-
     private GatewayForm _gatewayForm;
 
-
     public DispatchHandler() {
-
         super();
         log = org.slf4j.LoggerFactory.getLogger(getClass());
-        trustedHosts = new Vector<String>();
         _initialized = false;
         _besApi = null;
-
-
     }
 
     @Override
     public void init(HttpServlet servlet, Element config) throws Exception {
+
+        if(_initialized)
+            return;
 
         ingestPrefix(config);
 
         _besApi = new BesGatewayApi(_prefix);
         init(servlet, config, _besApi);
         _gatewayForm  =  new GatewayForm(getSystemPath(), _prefix);
+        _initialized=true;
     }
 
 
@@ -105,7 +95,6 @@ public class DispatchHandler extends BesDapDispatcher {
         if (relativeURL != null) {
             while(relativeURL.startsWith("/") && relativeURL.length()>1)
                 relativeURL = relativeURL.substring(1,relativeURL.length());
-
             boolean itsJustThePrefixWithoutTheSlash =
                     _prefix.substring(0,_prefix.lastIndexOf("/")).equals(relativeURL);
             
@@ -185,46 +174,7 @@ public class DispatchHandler extends BesDapDispatcher {
     }
 
 
-    private void ingestTrustedHosts(Element config) throws URISyntaxException, MalformedURLException {
 
-        if(config==null)
-            return;
-
-        String msg;
-        Element hostElem;
-        URL url;
-        URI uri;
-        List hosts = config.getChildren("trustedHost");
-
-        if(hosts.isEmpty()){
-            msg = "Configuration Warning: The <Handler> " +
-                    "element that declares " + this.getClass().getName() +
-                    " did not provide 1 or more <wcsHost> " +
-                    "child elements to limit the WCS services that " +
-                    "may be accessed. This not recomended.";
-            log.warn(msg);
-        }
-        else {
-            for (Object o : hosts) {
-                hostElem = (Element) o;
-                String host = hostElem.getTextTrim();
-                url = new URL(host);
-                log.debug(Util.urlInfo(url));
-                uri = new URI(host);
-                log.debug(Util.uriInfo(uri));
-                log.info("Adding " + url + " to allowed hosts list.");
-                trustedHosts.add(host);
-            }
-        }
-    }
-
-    private boolean isTrustedHost(String url){
-        for(String trustedHost : trustedHosts){
-            if(url.startsWith(trustedHost))
-                return true;
-        }
-        return false;
-    }
 
 
     private void ingestPrefix(Element config) throws Exception {
