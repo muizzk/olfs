@@ -26,11 +26,14 @@
 
 package opendap.bes.dap4Responders.DatasetServices;
 
+import opendap.PathBuilder;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.bes.dap4Responders.Dap4Responder;
 import opendap.bes.dap4Responders.MediaType;
 import opendap.coreServlet.OPeNDAPException;
+import opendap.coreServlet.ReqInfo;
 import opendap.coreServlet.RequestCache;
+import opendap.coreServlet.Util;
 import opendap.http.mediaTypes.TextXml;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -101,16 +104,16 @@ public class XmlDSR extends Dap4Responder {
 
         String context = request.getContextPath()+"/";
 
-        Document serviceDescription = new Document();
-
+        String baseUrl = Util.dropSuffixFrom(relativeUrl, normDSR.getRequestSuffixMatchPattern());
+        baseUrl = PathBuilder.pathConcat(context,baseUrl);
 
         log.debug("Sending {} for dataset: {}",getServiceTitle(),resourceId);
+        Document serviceDescription = new Document();
 
         HashMap<String,String> piMap = new HashMap<>( 2 );
         piMap.put( "type", "text/xsl" );
-        piMap.put( "href", context+"xsl/datasetServices.xsl" );
+        piMap.put( "href", PathBuilder.pathConcat(context,"xsl/datasetServices.xsl") );
         ProcessingInstruction pi = new ProcessingInstruction( "xml-stylesheet", piMap );
-
         serviceDescription.addContent( pi );
 
         Element datasetServices;
@@ -120,15 +123,12 @@ public class XmlDSR extends Dap4Responder {
         serviceDescription.setRootElement(datasetServices);
 
         MediaType responseMediaType = getNormativeMediaType();
-
         // Stash the Media type in case there's an error. That way the error handler will know how to encode the error.
         RequestCache.put(OPeNDAPException.ERROR_RESPONSE_MEDIA_TYPE_KEY, responseMediaType);
-
         response.setContentType(responseMediaType.getMimeType());
         response.setHeader("Content-Description", getNormativeMediaType().getMimeType());
 
         XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
-
         xmlo.output(serviceDescription, response.getOutputStream());
 
         log.debug("Sent {}",getServiceTitle());
