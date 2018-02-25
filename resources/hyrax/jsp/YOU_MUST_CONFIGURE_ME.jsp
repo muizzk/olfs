@@ -35,7 +35,7 @@
 </head>
 
 <body>
-<a href="http://www.opendap.org"><img src="<%= contextPath %>/docs/images/logo.gif" alt="Logo" width="206" height="93"
+<a href="http://www.opendap.org"><img src="<%= contextPath %>/docs/images/logo.png" alt="Logo" width="206" height="93"
                                       border="0"/></a>
 
 <h1 align="left">Hyrax Access Metrics Configuration Is Required.</h1>
@@ -53,13 +53,13 @@
     have a clear picture about the actual ways in which the servers are being used.</p>
 <p> Some of the questions we would like to answer are:</p>
 <ul>
-    <li><p>Are the servers seeing lots of small requests?</p></li>
-    <li><p>Large requests?</p></li>
-    <li><p>What output formats are most popular?</p></li>
-    <li><p>Which software clients are used to access tye service?</p></li>
+    <li><p>Are Hyrax servers seeing large numbers of requests which result in <b>small</b> responses?</p></li>
+    <li><p>Are Hyrax servers seeing large numbers of requests which result in <b>large</b> responses?</p></li>
+    <li><p>What response output formats are most popular?</p></li>
+    <li><p>Which software clients are commonly used to access the service?</p></li>
     <li><p>Can the server be modified to be better support the ways in
         which popular clients utilize the service?</p></li>
-    <li><p>Can some clients be improved to better utilize the service?</p></li>
+    <li><p>Can some clients be improved to utilize Hyrax service in a more effective manner?</p></li>
     <li><p>Do clients check constrained metadata responses?</p></li>
 </ul>
 
@@ -71,12 +71,12 @@
 
 <div class="para">
     <ol>
-        <li><a href="http://docs.opendap.org/index.php/Hyrax_-_OLFS_Configuration#OLFS_Configuration_Location">Locate your <tt>olfs.xml</tt> file.</a></li>
+        <li><a href="https://opendap.github.io/hyrax_guide/Master_Hyrax_Guide.html#OLFS-config-location">Locate your <tt>olfs.xml</tt> file.</a></li>
         <li>Edit the <tt>olfs.xml</tt> file and locate the XML element <tt>HyraxMetrics</tt></li>
         <li>Locate the child element <tt>HyraxBaseUrl</tt> and notice that the element has no content:
             <pre class="small">
 &lt;HyraxMetrics&gt;
-    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&#8221;no&#8221;&gt;&lt;/HyraxBaseUrl&gt;</span>
+    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&quot;no&quot;&gt;&lt;/HyraxBaseUrl&gt;</span>
     &lt;updateIntervalDays&gt;5&lt;/updateIntervalDays&gt;
 &lt;/HyraxMetrics&gt;
             </pre>
@@ -111,7 +111,7 @@
             <pre>
 &lt;!-- Hyrax Metrics: Disabled --&gt;
 &lt;HyraxMetrics&gt;
-    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&#8221;no&#8221;&gt;no&lt;/HyraxBaseUrl&gt;</span>
+    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&quot;no&quot;&gt;no&lt;/HyraxBaseUrl&gt;</span>
     &lt;updateIntervalDays&gt;5&lt;/updateIntervalDays&gt;
 &lt;/HyraxMetrics&gt;
             </pre>
@@ -129,7 +129,7 @@
         <pre>
 &lt;!-- Hyrax Metrics: "Ping" Only --&gt;
 &lt;HyraxMetrics&gt;
-    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&#8221;no&#8221;&gt;http://yourserver.org/opendap/&lt;/HyraxBaseUrl&gt;</span>
+    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&quot;no&quot;&gt;http://yourserver.org/opendap/&lt;/HyraxBaseUrl&gt;</span>
     &lt;updateIntervalDays&gt;5&lt;/updateIntervalDays&gt;
 &lt;/HyraxMetrics&gt;
         </pre>
@@ -148,7 +148,7 @@
         <pre>
 &lt;!-- Hyrax Metrics: Best Metrics Collection --&gt;
 &lt;HyraxMetrics&gt;
-    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&#8221;yes&#8221;&gt;http://yourserver.org/opendap/&lt;/HyraxBaseUrl&gt;
+    <span style="font-weight: bold">&lt;HyraxBaseUrl logReporting=&quot;yes&quot;&gt;http://yourserver.org/opendap/&lt;/HyraxBaseUrl&gt;
     &lt;updateIntervalDays&gt;5&lt;/updateIntervalDays&gt;</span>
 &lt;/HyraxMetrics&gt;
         </pre>
