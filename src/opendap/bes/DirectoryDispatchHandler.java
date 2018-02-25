@@ -30,7 +30,7 @@ import opendap.PathBuilder;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.coreServlet.*;
 import opendap.dap.Request;
-import opendap.http.AuthenticationControls;
+import opendap.auth.AuthenticationControls;
 import opendap.viewers.ViewersServlet;
 import opendap.xml.Transformer;
 import org.jdom.Document;
