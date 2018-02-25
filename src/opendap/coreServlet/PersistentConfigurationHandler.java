@@ -145,9 +145,7 @@ public class PersistentConfigurationHandler {
         if (!toDir.exists()) {
             if(!toDir.mkdirs()){
                 String msg = "FAILED to create target directory '"+toDir.getAbsolutePath()+
-                              "' Unable to copy content from '"+fromDir.getAbsolutePath()+"' user.name: " +
-                        System.getProperty("user.name");
-
+                              "' Unable to copy content from '"+fromDir.getAbsolutePath()+"'";
                 LoggerFactory.getLogger(PersistentConfigurationHandler.class).error("copyDirTree() - {}",msg);
                 throw new IOException(msg);
             }
@@ -155,7 +153,7 @@ public class PersistentConfigurationHandler {
 
         File[] files = fromDir.listFiles();
         if(files==null){
-            LoggerFactory.getLogger(PersistentConfigurationHandler.class).error("copyDirTree() - Unable to locate directory {}. No content will be copied. THIS IS BAD.",fromDirName);
+            LoggerFactory.getLogger(PersistentConfigurationHandler.class).error("copyDirTree() - Unable to locate directory {}. Not content will be copied. THIS IS BAD.",fromDirName);
             return;
         }
         for (int i=0; i<files.length; i++) {

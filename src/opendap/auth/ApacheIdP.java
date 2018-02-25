@@ -3,7 +3,7 @@
  * // This file is part of the "Hyrax Data Server" project.
  * //
  * //
- * // Copyright (c) 2018 OPeNDAP, Inc.
+ * // Copyright (c) 2014 OPeNDAP, Inc.
  * // Author: Nathan David Potter  <ndp@opendap.org>
  * //
  * // This library is free software; you can redistribute it and/or
@@ -41,8 +41,7 @@ import java.io.IOException;
 public class ApacheIdP extends IdProvider {
 
 
-    public static final String DEFAULT_AUTHENTICATION_CONTEXT="apache";
-
+    public static final String DEFAULT_ID="apache";
     /**
      * Default service point for the mod_shib Logout
      */
@@ -53,9 +52,17 @@ public class ApacheIdP extends IdProvider {
      */
     public static final String DEFAULT_LOGIN_LOCATION = "/Login";
 
-    private String _loginEndpoint;
-    private String _logoutEndpoint;
 
+    /**
+     * Service point for the mod_shib Login
+     */
+    protected String _loginLocation;
+
+
+    /**
+     * Service point for the mod_shib Login
+     */
+    protected String _logoutLocation;
 
 
     private Logger _log;
@@ -65,32 +72,41 @@ public class ApacheIdP extends IdProvider {
         super();
         _log = LoggerFactory.getLogger(this.getClass());
 
-        setAuthContext(DEFAULT_AUTHENTICATION_CONTEXT);
+        setId(DEFAULT_ID);
         setDescription("Apache Identity Provider");
 
-        _loginEndpoint = DEFAULT_LOGIN_LOCATION;
-        _logoutEndpoint = DEFAULT_LOGOUT_LOCATION;
-
+        _loginLocation = DEFAULT_LOGIN_LOCATION;
+        _logoutLocation = DEFAULT_LOGOUT_LOCATION;
     }
 
 
 
     @Override
-    public void init(Element config, String serviceContext) throws ConfigurationException {
-        super.init(config,serviceContext);
+    public void init(Element config) throws ConfigurationException {
+
+        super.init(config);
 
         Element e = config.getChild("login");
         if(e!=null){
-            _loginEndpoint= e.getTextTrim();
+            setLoginLocation(e.getTextTrim());
         }
+
 
         e = config.getChild("logout");
         if(e!=null){
-            _logoutEndpoint = e.getTextTrim();
+            setLogoutLocation(e.getTextTrim());
         }
+
+
     }
 
 
+
+
+    public void setLogoutLocation(String logoutLocation){  _logoutLocation =  logoutLocation; }
+    public String getLogoutLocation(){ return _logoutLocation; }
+    public void setLoginLocation(String loginLocation){  _loginLocation =  loginLocation; }
+    public String getLoginLocation(){ return _loginLocation; }
 
 
     /**
@@ -106,7 +122,7 @@ public class ApacheIdP extends IdProvider {
          * Redirect the user back to the their original requested resource.
          */
         HttpSession session = request.getSession(false);
-        String redirectUrl = null;
+        String redirectUrl = request.getContextPath();
 
         String uid = request.getRemoteUser();
 
@@ -121,12 +137,15 @@ public class ApacheIdP extends IdProvider {
 
             _log.error("doLogin() - OUCH! {}",msg.toString());
             throw new ConfigurationException(msg.toString());
+
         }
         else {
             // We have a user - so let's make sure they have a profile,
             // and then we just try to bounce them back to IdFilter.ORIGINAL_REQUEST_URL
 
             _log.info("doLogin() - User has uid: {}", uid);
+
+
             /*
 
             // Do they have a profile?
@@ -140,13 +159,21 @@ public class ApacheIdP extends IdProvider {
             session.setAttribute(IdFilter.USER_PROFILE, up);
 
             */
+
             redirectUrl = (String) session.getAttribute(IdFilter.ORIGINAL_REQUEST_URL);
+
+            if(redirectUrl==null){
+                // Unset? Punt...
+                redirectUrl = request.getContextPath();
+            }
+
         }
-        if(redirectUrl==null){
-            redirectUrl = request.getContextPath();
-        }
+
         _log.info("doLogin(): redirecting to {}",redirectUrl);
+
         response.sendRedirect(redirectUrl);
+
+
         return true;
     }
 
@@ -159,29 +186,13 @@ public class ApacheIdP extends IdProvider {
     public void doLogout(HttpServletRequest request, HttpServletResponse response)
 	        throws IOException
     {
-        String redirectUrl = getServiceContext();
         HttpSession session = request.getSession(false);
         if( session != null )
         {
-            String returnToUrl =  (String) session.getAttribute(IdFilter.ORIGINAL_REQUEST_URL);
-            if(returnToUrl!=null)
-                redirectUrl =returnToUrl;
             session.invalidate();
         }
 
-        response.sendRedirect(redirectUrl);
+        response.sendRedirect(getLogoutLocation());
     }
-
-    @Override
-    public String getLoginEndpoint(){
-        return _loginEndpoint;
-    }
-
-
-    @Override
-    public String getLogoutEndpoint() {
-        return _logoutEndpoint;
-    }
-
 
 }

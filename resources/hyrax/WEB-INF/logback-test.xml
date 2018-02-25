@@ -152,13 +152,7 @@
     </logger>
 
     <logger name="opendap.auth" level="all" />
-    <logger name="PEP" level="all" >
-        <appender-ref ref="stdout"/>
-    </logger>
-    <logger name="IdP" level="all">
-        <appender-ref ref="stdout"/>
-    </logger>
-
+    
     <logger name="opendap.aggregation" level="all" />
 
     <logger name="opendap.w10n" level="all" />

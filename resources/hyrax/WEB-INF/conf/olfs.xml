@@ -64,6 +64,12 @@
         </BES>
     </BESManager>
 
+    <!-- AuthenticationControls>
+        <login>loginPath?login_param=foo</login>
+        <logout>logoutPath?logout_param=foo</logout>
+    </AuthenticationControls -->
+
+
     <!-- CatalogCache>
         <maxEntries>10000</maxEntries>
         <updateIntervalSeconds>10000</updateIntervalSeconds>
