@@ -73,6 +73,9 @@
 
     <xsl:template match="webService" mode="WebServiceLinks">
         <li><a href="{@serviceUrl}"><xsl:value-of select="@applicationName"/></a></li>
+        <!-- xsl:copy-of select="@serviceUrl"/ -->
+        <!-- li> <xsl:copy-of select="@serviceUrl"/> </li -->
+        <!-- li> <xsl:copy-of select="."/> </li -->
     </xsl:template>
 
 
@@ -102,7 +105,7 @@
 
             <table width="100%">
                 <tr>
-                    <td width="30%" align="left"><img alt="Logo" src='{$docsService}/images/logo.gif' /></td>
+                    <td width="30%" align="left"><img alt="Logo" src='{$docsService}/images/logo.png' /></td>
                     <td>Dataset Viewers</td>
                 </tr>
             </table>

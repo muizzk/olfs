@@ -26,6 +26,7 @@
 
 package opendap.bes.dap4Responders.Iso19115;
 
+import opendap.PathBuilder;
 import opendap.bes.Version;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.bes.dap4Responders.Dap4Responder;
@@ -139,35 +140,36 @@ public class IsoRubricDMR extends Dap4Responder {
         log.debug("Cached working directory: "+currentDir);
 
 
-        String xslDir = _systemPath + "/nciso/xsl";
+        String xslDir = new PathBuilder(_systemPath).pathAppend("nciso").pathAppend("xsl").toString();
 
 
         log.debug("Changing working directory to "+ xslDir);
         System.setProperty("user.dir",xslDir);
 
-        String xsltDocName = "OPeNDAPDDCount-HTML.xsl";
+        try {
+            String xsltDocName = "OPeNDAPDDCount-HTML.xsl";
 
 
-        // This Transformer class is an attempt at making the use of the saxon-9 API
-        // a little simpler to use. It makes it easy to set input parameters for the stylesheet.
-        // See the source code for opendap.xml.Transformer for more.
-        Transformer transformer = new Transformer(xsltDocName);
+            // This Transformer class is an attempt at making the use of the saxon-9 API
+            // a little simpler to use. It makes it easy to set input parameters for the stylesheet.
+            // See the source code for opendap.xml.Transformer for more.
+            Transformer transformer = new Transformer(xsltDocName);
 
 
-        transformer.setParameter("docsService",oreq.getDocsServiceLocalID());
-        transformer.setParameter("HyraxVersion",Version.getHyraxVersionString());
+            transformer.setParameter("docsService", oreq.getDocsServiceLocalID());
+            transformer.setParameter("HyraxVersion", Version.getHyraxVersionString());
 
-        // Transform the BES  showCatalog response into a HTML page for the browser
-        transformer.transform( new JDOMSource(dmr),os);
-
-
+            // Transform the BES  showCatalog response into a HTML page for the browser
+            transformer.transform(new JDOMSource(dmr), os);
 
 
-        os.flush();
-        log.info("Sent {}",getServiceTitle());
-        log.debug("Restoring working directory to "+ currentDir);
-        System.setProperty("user.dir",currentDir);
-
+            os.flush();
+            log.info("Sent {}", getServiceTitle());
+        }
+        finally {
+            log.debug("Restoring working directory to " + currentDir);
+            System.setProperty("user.dir", currentDir);
+        }
 
 
 

@@ -39,48 +39,40 @@ public class PathBuilder  {
     private StringBuilder _sb;
 
     public PathBuilder(){
-
         _log = LoggerFactory.getLogger(this.getClass());
-
         _sb = new StringBuilder();
     }
 
     public PathBuilder(String s){
-        _sb = new StringBuilder(s);
+        this();
+        _sb.append(s);
     }
 
     public PathBuilder(CharSequence cs){
-        _sb = new StringBuilder(cs);
+        this();
+        _sb.append(cs);
     }
 
     public PathBuilder pathAppend(String s){
-
         if(s==null || s.length()==0)
             return this;
-
 
         while (s.startsWith("/") && s.length() > 0) {
             s = s.substring(1);
         }
-
         //_log.debug("pathAppend: _sb: '{}' s: '{}'",_sb.toString(),s);
         //_log.debug("pathAppend: _sb.lastIndexOf(\"/\"): '{}' _sb.length(): '{}'",_sb.lastIndexOf("/"),_sb.length());
-
-
         if (_sb.length()==0 || (_sb.lastIndexOf("/") == _sb.length()-1)) {
             _sb.append(s);
         } else {
             _sb.append("/").append(s);
         }
-
         _log.info("pathAppend: result _sb: ",_sb.toString());
-
         return this;
     }
 
 
     public static String pathConcat(String path1, String path2){
-
         String result;
         if(path1==null || path1.length()==0) {
             result = path2;
@@ -90,22 +82,16 @@ public class PathBuilder  {
             result = path1;
         }
         else {
-            while (path2.startsWith("/") && path2.length() > 0) {
+            while (path2.startsWith("/")) {
                 path2 = path2.substring(1);
             }
-
-            if (path1.lastIndexOf("/") == path1.length()) {
+            if (path1.endsWith("/")) {
                 result = path1 + path2;
             } else {
                 result = path1 + "/" + path2;
             }
-
         }
         return result;
-
-
-
-
     }
 
 

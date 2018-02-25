@@ -83,10 +83,10 @@
 	<DefaultPing>3600</DefaultPing>
     </LogReporter>
 
-    <CatalogCache>
+    <!-- CatalogCache>
         <maxEntries>10000</maxEntries>
         <updateIntervalSeconds>10000</updateIntervalSeconds>
-    </CatalogCache>
+    </CatalogCache -->
 
     <DispatchHandlers>
 
@@ -121,6 +121,7 @@
 
             <Handler className="opendap.gateway.DispatchHandler">
                 <prefix>gateway</prefix>
+                <UseDAP2ResourceUrlResponse />
             </Handler>
 
             <Handler className="opendap.bes.BesDapDispatcher" >

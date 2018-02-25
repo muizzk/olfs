@@ -71,7 +71,7 @@
                 <table width="100%" border="0">
                     <tr>
                         <td>
-                            <img alt="OPeNDAP Logo" src="{$docsService}/images/logo.gif"/>
+                            <img alt="OPeNDAP Logo" src="{$docsService}/images/logo.png"/>
                         </td>
                         <td>
                             <div class="large">DAP4 Data Access Form</div>
@@ -549,7 +549,7 @@
             <xsl:if test="generate-id(..)!=generate-id(/dap:Dataset) and not(parent::dap:Map)">
                 <xsl:value-of select="$separator"/>
             </xsl:if>
-            <xsl:value-of select="@name"/>
+            <xsl:value-of select="translate(@name,' ','_')"/>
         </xsl:if>
     </xsl:template>
     <!-- ################################################################### -->
