@@ -150,7 +150,7 @@ public class DispatchServlet extends HttpServlet {
 
         loadConfig(configFile);
 
-        //ReporterConfig.processConfig(configDoc.getRootElement().getChild("HyraxMetrics"));
+        ReporterConfig.processConfig(configDoc.getRootElement().getChild("HyraxMetrics"));
         log.info("init(): ReporterConfig.status(): {}",ReporterConfig.status());
 
 
