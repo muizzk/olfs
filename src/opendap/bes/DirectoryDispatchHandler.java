@@ -30,7 +30,7 @@ import opendap.PathBuilder;
 import opendap.bes.dap2Responders.BesApi;
 import opendap.coreServlet.*;
 import opendap.dap.Request;
-import opendap.http.AuthenticationControls;
+import opendap.auth.AuthenticationControls;
 import opendap.viewers.ViewersServlet;
 import opendap.xml.Transformer;
 import org.jdom.Document;
@@ -102,7 +102,6 @@ public class DirectoryDispatchHandler implements DispatchHandler {
             throws Exception {
 
         return pi.isDir()&&(pi.remainder().isEmpty()||pi.remainder().equals("contents.html")||pi.remainder().equals("catalog.html") || pi.remainder().equals("/"));
-
     }
 
     /**
