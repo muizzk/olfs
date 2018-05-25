@@ -92,11 +92,9 @@ public class HelloWorld {
 
         try {
             Document xmlDDS = app.getDDSRequest(datasource, ce, xdap_accept);
-
             XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
-
             xmlo.output(xmlDDS,System.out);
-
+            
         } catch (Exception BadConfigurationException) {
             System.out.println("Bad Configuration Error");
         }
