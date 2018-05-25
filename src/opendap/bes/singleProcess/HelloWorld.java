@@ -36,7 +36,7 @@ public class HelloWorld {
      * </BES>
      * </BESManager>
      **/
-    private static Element getBesConfig() {
+    private  Element getBesConfig() {
         Element bes = new Element("BES");
 
         Element prefix = new Element("prefix");
@@ -66,7 +66,7 @@ public class HelloWorld {
     }
 
 
-    private static void configBesManager() throws Exception {
+    private  void configBesManager() throws Exception {
         BESManager besManager = new BESManager();
         besManager.init(getBesConfig());
     }
@@ -79,7 +79,9 @@ public class HelloWorld {
         String ce = "time";
         String xdap_accept = "3.2";
 
-        configBesManager();
+        HelloWorld hw = new HelloWorld();
+
+        hw.configBesManager();
 
         BesApi app = new BesApi();
 
@@ -94,7 +96,7 @@ public class HelloWorld {
             Document xmlDDS = app.getDDSRequest(datasource, ce, xdap_accept);
             XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
             xmlo.output(xmlDDS,System.out);
-            
+
         } catch (Exception BadConfigurationException) {
             System.out.println("Bad Configuration Error");
         }
