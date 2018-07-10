@@ -108,6 +108,7 @@ public class DispatchHandler extends BesDapDispatcher {
                 isMyRequest = true;
             }
         }
+
         return isMyRequest;
     }
 
