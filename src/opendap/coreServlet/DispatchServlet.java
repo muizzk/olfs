@@ -466,7 +466,7 @@ public class DispatchServlet extends HttpServlet {
                 log.debug(Util.getMemoryReport());
 
                 log.debug(ServletUtil.showRequest(request, reqno));
-                //log.debug(AwsUtil.probeRequest(this, request));
+                log.debug(ServletUtil.probeRequest(this, request));
 
 
                 if(redirectForServiceOnlyRequest(request,response))
