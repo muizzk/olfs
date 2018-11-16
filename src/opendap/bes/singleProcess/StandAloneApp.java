@@ -6,12 +6,8 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.slf4j.Logger;
 
-import javax.servlet.ServletException;
-import java.io.OutputStream;
-
-public class HelloWorld {
+public class StandAloneApp {
     private Document configDoc;
     private org.slf4j.Logger log;
 
@@ -22,6 +18,13 @@ public class HelloWorld {
 
     public static final String XDAP_ACCEPT_CONTEXT = "xdap_accept";
     public static final String DEFAULT_XDAP_ACCEPT = "2.0";
+
+    static {
+        System.loadLibrary("bes_dispatch");
+        System.loadLibrary("bes_standalone");
+    }
+
+    private native void sayHello();
 
     /**
      * Makes a the default BES configuration prcedurally.
@@ -79,7 +82,10 @@ public class HelloWorld {
         String ce = "time";
         String xdap_accept = "3.2";
 
-        HelloWorld hw = new HelloWorld();
+        //StandAloneApp hw = new StandAloneApp();
+        opendap.bes.singleProcess.StaneAloneApp hw = new opendap.bes.singleProcess.StaneAloneApp();
+
+        hw.sayHello();
 
         hw.configBesManager();
 
