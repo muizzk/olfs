@@ -7,6 +7,8 @@ import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
+import java.nio.ByteBuffer;
+
 public class StandAloneApp {
     private Document configDoc;
     private org.slf4j.Logger log;
@@ -19,12 +21,15 @@ public class StandAloneApp {
     public static final String XDAP_ACCEPT_CONTEXT = "xdap_accept";
     public static final String DEFAULT_XDAP_ACCEPT = "2.0";
 
+    public static final int bufSize = 1024;
+
     static {
         System.loadLibrary("bes_dispatch");
         System.loadLibrary("bes_standalone");
     }
 
     private native void sayHello();
+    //private native void write(ByteBuffer request, ByteBuffer result);
 
     /**
      * Makes a the default BES configuration prcedurally.
@@ -75,15 +80,17 @@ public class StandAloneApp {
     }
 
     /**
-     * @param args
+     *  * @param args
      */
     public static void main(String args[]) throws Exception {
         String datasource = "fnoc1.nc";
         String ce = "time";
         String xdap_accept = "3.2";
 
-        //StandAloneApp hw = new StandAloneApp();
-        opendap.bes.singleProcess.StaneAloneApp hw = new opendap.bes.singleProcess.StaneAloneApp();
+        ByteBuffer requestBuf = ByteBuffer.allocateDirect(bufSize);
+        ByteBuffer responseBuf = ByteBuffer.allocateDirect(bufSize * 4);
+
+        opendap.bes.singleProcess.StandAloneApp hw = new opendap.bes.singleProcess.StandAloneApp();
 
         hw.sayHello();
 
