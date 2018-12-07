@@ -8,6 +8,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 
 public class StandAloneApp {
     private Document configDoc;
@@ -24,8 +25,8 @@ public class StandAloneApp {
     public static final int bufSize = 1024;
 
     static {
-        System.loadLibrary("bes_dispatch");
-        System.loadLibrary("bes_standalone");
+        //System.loadLibrary("bes_dispatch");
+        //System.loadLibrary("bes_standalone");
     }
 
     private native void sayHello();
@@ -90,9 +91,9 @@ public class StandAloneApp {
         ByteBuffer requestBuf = ByteBuffer.allocateDirect(bufSize);
         ByteBuffer responseBuf = ByteBuffer.allocateDirect(bufSize * 4);
 
-        opendap.bes.singleProcess.StandAloneApp hw = new opendap.bes.singleProcess.StandAloneApp();
+       opendap.bes.singleProcess.StandAloneApp hw = new opendap.bes.singleProcess.StandAloneApp();
 
-        hw.sayHello();
+        // hw.sayHello();
 
         hw.configBesManager();
 
@@ -110,10 +111,14 @@ public class StandAloneApp {
             XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
             xmlo.output(xmlDDS,System.out);
 
-        } catch (Exception BadConfigurationException) {
-            System.out.println("Bad Configuration Error");
+            CharBuffer cb = requestBuf.asCharBuffer();
+            cb.append(xmlo.outputString(xmlDDS));
+
+            System.out.println("Nothing burning...");
+
+        } catch (Exception e) {
+            System.err.println("Caught "+e.getClass().getName()+" message: "+e.getMessage());
         }
 
-        System.out.println("Hello World");
     }
 }
