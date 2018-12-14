@@ -22,15 +22,17 @@ public class StandAloneApp {
     public static final String XDAP_ACCEPT_CONTEXT = "xdap_accept";
     public static final String DEFAULT_XDAP_ACCEPT = "2.0";
 
-    public static final int bufSize = 1024;
+    public static final int bufSize = 8192;
 
     static {
-        //System.loadLibrary("bes_dispatch");
-        //System.loadLibrary("bes_standalone");
+        //System.loadLibrary("myjni");
+        System.loadLibrary("bes_dispatch");
+        System.loadLibrary("bes_standalone");
     }
 
     private native void sayHello();
-    //private native void write(ByteBuffer request, ByteBuffer result);
+    private native void write(ByteBuffer request, ByteBuffer result);
+    private native double size(ByteBuffer buffer);
 
     /**
      * Makes a the default BES configuration prcedurally.
@@ -89,11 +91,11 @@ public class StandAloneApp {
         String xdap_accept = "3.2";
 
         ByteBuffer requestBuf = ByteBuffer.allocateDirect(bufSize);
-        ByteBuffer responseBuf = ByteBuffer.allocateDirect(bufSize * 4);
+        ByteBuffer responseBuf = ByteBuffer.allocateDirect(bufSize);
 
        opendap.bes.singleProcess.StandAloneApp hw = new opendap.bes.singleProcess.StandAloneApp();
 
-        // hw.sayHello();
+        hw.sayHello();
 
         hw.configBesManager();
 
@@ -112,9 +114,18 @@ public class StandAloneApp {
             xmlo.output(xmlDDS,System.out);
 
             CharBuffer cb = requestBuf.asCharBuffer();
-            cb.append(xmlo.outputString(xmlDDS));
+            //cb.append(xmlo.outputString(xmlDDS));
+
+            double nSize = hw.size(requestBuf);
+            System.out.println("BufferSize:"+nSize);
+
+            hw.write(requestBuf,responseBuf);
 
             System.out.println("Nothing burning...");
+
+            for (int i = 100; i > 0; i--) {
+                System.out.println("DB[" + i + "]= " + responseBuf.get(i));
+            }
 
         } catch (Exception e) {
             System.err.println("Caught "+e.getClass().getName()+" message: "+e.getMessage());
