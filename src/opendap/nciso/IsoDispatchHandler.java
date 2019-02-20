@@ -71,23 +71,21 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
     }
 
 
-
-
     public void init(HttpServlet servlet,Element config) throws Exception {
+        init(servlet,config, new BesApi());
+    }
 
-        if(initialized) return;
+
+    public void init(HttpServlet servlet,Element config, BesApi besApi) throws Exception {
+        if(initialized)
+            return;
 
         _config = config;
         _systemPath = ServletUtil.getSystemPath(servlet,"");
-
         isoRequestPatternRegexString = ".*\\.iso";
         isoRequestPattern = Pattern.compile(isoRequestPatternRegexString, Pattern.CASE_INSENSITIVE);
-
-
-        _besApi = new BesApi();
-
+        _besApi = besApi;
         initialized = true;
-
     }
 
     public boolean requestCanBeHandled(HttpServletRequest request)
@@ -216,7 +214,7 @@ public class IsoDispatchHandler implements opendap.coreServlet.DispatchHandler {
         RequestCache.put(OPeNDAPException.ERROR_RESPONSE_MEDIA_TYPE_KEY,responseMediaType);
 
         response.setContentType(responseMediaType.getMimeType());
-        Version.setOpendapMimeHeaders(request, response, _besApi);
+        Version.setOpendapMimeHeaders(request, response);
         response.setHeader("Content-Description", responseMediaType.getMimeType());
 
 

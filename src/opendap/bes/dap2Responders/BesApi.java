@@ -26,6 +26,7 @@
 
 package opendap.bes.dap2Responders;
 
+import opendap.PathBuilder;
 import opendap.bes.*;
 import opendap.bes.caching.BesCatalogCache;
 import opendap.coreServlet.ResourceInfo;
@@ -46,6 +47,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,7 +65,7 @@ import java.util.regex.Pattern;
  *
  *  - override BesApi.besTransaction(*)
  */
-public class BesApi {
+public class BesApi implements Cloneable {
 
     public static final String DAP4_DATA  = "dap";
     public static final String DAP4_DMR   = "dmr";
@@ -83,6 +86,7 @@ public class BesApi {
     public static final String GEOTIFF    = "geotiff";
     public static final String GMLJP2     = "jpeg2000";
     public static final String JSON       = "json";
+    public static final String COVJSON   = "covjson";
     public static final String IJSON      = "ijson";
     public static final String W10N       = "w10n";
     public static final String W10N_META      = "w10nMeta";
@@ -90,19 +94,18 @@ public class BesApi {
     public static final String W10N_FLATTEN   = "w10nFlatten";
     public static final String W10N_TRAVERSE   = "w10nTraverse";
     public static final String SHOW_BES_KEY    = "showBesKey";
+    public static final String VALUE           = "value";
+    public static final String SUPPORT_EMAIL   = "SupportEmail";
+    public static final String DEFAULT_SUPPORT_EMAIL_ADDRESS   = "support@opendap.org";
 
     public static final String REQUEST_ID      = "reqID";
+
 
     private static final Namespace BES_NS = opendap.namespaces.BES.BES_NS;
 
     public static final String ERRORS_CONTEXT  = "errors";
     public static final String XML_ERRORS      = "xml";
 
-    // Dropped the use of these because now the OLFS is handling (parsing) all of the errors.
-    // Previously some errors were sent directly to the client in the stream from the BES. No. More.
-    //public static final String DAP2_ERRORS     = "dap2";
-    //public static final String DAP4_ERRORS     = "dap4";
-    //public static final String JSON_ERRORS     = "json";
     public static final String XMLBASE_CONTEXT = "xml:base";
 
     public static final String STORE_RESULT_CONTEXT  = "store_result";
@@ -113,6 +116,9 @@ public class BesApi {
 
     public static final String EXPLICIT_CONTAINERS_CONTEXT = "dap_explicit_containers";
 
+    // Added for cloudydap experiment
+    public static final String CLOUDY_DAP_CONTEXT = "cloudydap";
+
     public static final String MAX_RESPONSE_SIZE_CONTEXT = "max_response_size";
     public static final String CF_HISTORY_ENTRY_CONTEXT = "cf_history_entry";
 
@@ -122,7 +128,9 @@ public class BesApi {
      * In more common parlance it's "the catalog called catalog" the utilizes
      * the BES.Catalog.catalog.RootDirectory filesystem as the catalog.
      */
-    public static final String DEFAULT_BES_SPACE = "catalog";
+    public static final String DEFAULT_BES_CATALOG_NAME = "catalog";
+    public static final String DEFAULT_BES_CATALOG_TYPE_MATCH_KEY = "BES.Catalog." + DEFAULT_BES_CATALOG_NAME + ".TypeMatch";
+
 
     /**
      * This specifes the sdeafult BES "container" name. While this name could
@@ -130,16 +138,17 @@ public class BesApi {
      * command readability a value should be chosen that relates to the BES "space"
      * name that is being used.
      */
-    public static final String DEFAULT_BES_CONTAINER = "catalogContainer";
+    public static final String DEFAULT_BES_CONTAINER = DEFAULT_BES_CATALOG_NAME + "Container";
 
 
-    public static final String _regexToMatchLastDotSuffixString = "\\.(?=[^.]*$).*$" ;
+    public static final String MATCH_LAST_DOT_SUFFIX_REGEX_STRING = "\\.(?=[^.]*$).*$" ;
 
-    /**
-     * The name of the BES Exception Element.
-     */
-    private static String BES_ERROR = "BESError";
 
+    public static final String BES_SERVER_ADMINISTRATOR_KEY = "BES.ServerAdministrator";
+
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 
     private boolean _initialized = false;
 
@@ -183,39 +192,59 @@ public class BesApi {
         return BESManager.getCombinedVersionDocument();
     }
 
+    public AdminInfo getAdminInfo(String path) throws JDOMException, BadConfigurationException, PPTException, BESError, IOException {
+        return new AdminInfo(this,  path);
+    }
+
+    /**
+     * Returns the Administrator email held by the BES associated with the path.
+     * @param path
+     * @return
+     */
     public String getAdministrator(String path) throws BadConfigurationException, JDOMException, IOException, PPTException, BESError {
 
         String adminEmail = "support@opendap.org";
-
-
         BES bes = getBES(path);
-
         Document verDoc = bes.getVersionDocument();
-
         if(verDoc==null)
             return adminEmail;
 
-
         Element besElement = verDoc.getRootElement();
-
         if(besElement==null)
             return adminEmail;
 
-
         Element adminElement = besElement.getChild("Administrator", opendap.namespaces.BES.BES_NS);
-
-
         if(adminElement!=null)
             adminEmail = adminElement.getTextTrim();
 
         return adminEmail;
     }
 
-    //public static void configure(OLFSConfig olfsConfig) throws Exception {
+    /**
+     * Returns the support email held by the BES associated with the path.
+     * @param path
+     * @return
+     */
+    public String getSupportEmail(String path)  {
 
-    //    BESManager.configure(olfsConfig.getBESConfig());
+        String supportEmail = DEFAULT_SUPPORT_EMAIL_ADDRESS;
+        try {
+            Element showBesKey = showBesKey(path, SUPPORT_EMAIL);
+            if(showBesKey!=null){
+                XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
+                log.error(xmlo.outputString(showBesKey));
+                Element value =  showBesKey.getChild(VALUE,opendap.namespaces.BES.BES_NS);
+                if(value!=null){
+                    supportEmail = value.getTextTrim();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to get {} from BES. Message: {}",SUPPORT_EMAIL,e.getMessage());
+        }
 
-    //}
+        return supportEmail;
+    }
+
 
 
     /**
@@ -492,7 +521,7 @@ public class BesApi {
 
         besTransaction(
                 dataSource,
-                getDap2RequestDocument(DAP2_DATA, dataSource, constraintExpression, async, storeResult, xdap_accept, maxResponseSize, null, null, null, XML_ERRORS),
+                getDap2RequestDocumentAsync(DAP2_DATA, dataSource, constraintExpression, async, storeResult, xdap_accept, maxResponseSize, null, null, null, XML_ERRORS),
                 os);
     }
 
@@ -707,16 +736,73 @@ public class BesApi {
      * @throws PPTException              .
      */
     public void writeDap4DataAsJson(String dataSource,
-                                       QueryParameters qp,
-                                       int maxResponseSize,
-                                       OutputStream os)
+                                    QueryParameters qp,
+                                    int maxResponseSize,
+                                    OutputStream os)
             throws BadConfigurationException, BESError, IOException, PPTException {
 
         besTransaction(
-            dataSource,
-            getDap4DataAsJsonRequest(dataSource, qp, maxResponseSize),
-            os);
+                dataSource,
+                getDap4DataAsJsonRequest(dataSource, qp, maxResponseSize),
+                os);
     }
+
+    /**
+     * Writes the NetCDF file out response for the dataSource to the passed
+     * stream.
+     *
+     * @param dataSource The requested DataSource
+     * @param qp The DAP4 query string parameters
+     * @param os         The Stream to which to write the response.
+     * @throws BadConfigurationException .
+     * @throws BESError                  .
+     * @throws IOException               .
+     * @throws PPTException              .
+     */
+    public void writeDap4DataAsCovJson(String dataSource,
+                                    QueryParameters qp,
+                                    int maxResponseSize,
+                                    OutputStream os)
+            throws BadConfigurationException, BESError, IOException, PPTException {
+
+        besTransaction(
+                dataSource,
+                getDap4DataAsCovJsonRequest(dataSource, qp, maxResponseSize),
+                os);
+    }
+
+
+    /**
+     * Writes the combined site map for the server to the passed stream. This means that one BES from each
+     * BesGroup (assumed to be identical to other BesGroup members) is queried for its site map and all of
+     * resulting BESGroup site maps are combined into a single server site map. woot.
+     *
+     *
+     * @param sitePrefix The requested DataSource
+     * @param os         The Stream to which to write the response.
+     * @throws BadConfigurationException .
+     * @throws BESError                  .
+     * @throws IOException               .
+     * @throws PPTException              .
+     */
+    public void writeCombinedSiteMapResponse(String sitePrefix,
+                                             OutputStream os)
+            throws BadConfigurationException, BESError, IOException, PPTException {
+
+        Iterator<BesGroup> bgIt = BESManager.getBesGroups();
+        while(bgIt.hasNext()){
+            BesGroup bg = bgIt.next();
+            String besPrefix = bg.getGroupPrefix();
+            String siteMapPrefix = PathBuilder.pathConcat(sitePrefix,besPrefix);
+
+            besTransaction(
+                    besPrefix,
+                    getSiteMapRequestDocument(siteMapPrefix),
+                    os);
+        }
+    }
+
+
 
     /**
      * Writes the NetCDF file out response for the dataSource to the passed
@@ -814,7 +900,7 @@ public class BesApi {
 
 
     /**
-     * Writes the NetCDF file out response for the dataSource to the passed
+     * Writes the DAP4 XML data response for the dataSource to the passed
      * stream.
      *
      * @param dataSource The requested DataSource
@@ -842,7 +928,7 @@ public class BesApi {
 
 
     /**
-     * Writes the NetCDF file out response for the dataSource to the passed
+     * Writes the DAP4 json metadata response for the dataSource to the passed
      * stream.
      *
      * @param dataSource The requested DataSource
@@ -867,7 +953,7 @@ public class BesApi {
 
 
     /**
-     * Writes the NetCDF file out response for the dataSource to the passed
+     * Writes the DAP4 IJson metadata response for the dataSource to the passed
      * stream.
      *
      * @param dataSource The requested DataSource
@@ -893,7 +979,7 @@ public class BesApi {
 
 
     /**
-     * Writes the NetCDF file out response for the dataSource to the passed
+     * Writes the DAP2 IJson data response for the dataSource to the passed
      * stream.
      *
      * @param dataSource The requested DataSource
@@ -921,7 +1007,7 @@ public class BesApi {
 
 
     /**
-     * Writes the NetCDF file out response for the dataSource to the passed
+     * Writes the DAP2 IJson metadata response for the dataSource to the passed
      * stream.
      *
      * @param dataSource The requested DataSource
@@ -948,7 +1034,7 @@ public class BesApi {
     }
 
     /**
-     * Writes the NetCDF file out response for the dataSource to the passed
+     * Writes the DAP2 JSON data response for the dataSource to the passed
      * stream.
      *
      * @param dataSource The requested DataSource
@@ -962,13 +1048,13 @@ public class BesApi {
      * @throws PPTException              .
      */
     public void writeDap2DataAsJson(String dataSource,
-                                       String constraintExpression,
-                                       String xdap_accept,
-                                       int maxResponseSize,
-                                       OutputStream os)
+                                    String constraintExpression,
+                                    String xdap_accept,
+                                    int maxResponseSize,
+                                    OutputStream os)
             throws BadConfigurationException, BESError, IOException, PPTException {
 
-         besTransaction(
+        besTransaction(
                 dataSource,
                 getDap2DataAsJsonRequest(dataSource, constraintExpression, xdap_accept, maxResponseSize),
                 os);
@@ -976,7 +1062,39 @@ public class BesApi {
 
 
     /**
-     * Writes the NetCDF file out response for the dataSource to the passed
+     * Writes the DAP2 CovJSON data response for the dataSource to the passed
+     * stream.
+     *
+     * @param dataSource The requested DataSource
+     * @param constraintExpression The constraintElement expression to be applied to
+     *                             the request..
+     * @param xdap_accept The version of the DAP to use in building the response.
+     * @param os         The Stream to which to write the response.
+     * @throws BadConfigurationException .
+     * @throws BESError                  .
+     * @throws IOException               .
+     * @throws PPTException              .
+     */
+    public void writeDap2DataAsCovJson(String dataSource,
+                                    String constraintExpression,
+                                    String xdap_accept,
+                                    int maxResponseSize,
+                                    OutputStream os)
+            throws BadConfigurationException, BESError, IOException, PPTException {
+
+        besTransaction(
+                dataSource,
+                getDap2DataAsCovJsonRequest(
+                        dataSource,
+                        constraintExpression,
+                        xdap_accept,
+                        maxResponseSize),
+                        os);
+    }
+
+
+    /**
+     * Write DAP2 metadata as JSON for the dataSource to the passed
      * stream.
      *
      * @param dataSource The requested DataSource
@@ -1004,7 +1122,7 @@ public class BesApi {
 
 
     /**
-     * Writes the NetCDF file out response for the dataSource to the passed
+     * Writes the w10n Json response for the dataSource to the passed
      * stream.
      *
      * @param dataSource The requested DataSource
@@ -1253,6 +1371,7 @@ public class BesApi {
      * @throws IOException               .
      * @throws JDOMException             .
      */
+    @Deprecated
     public void getBesCatalog(String dataSource, Document response)
             throws BadConfigurationException, PPTException, JDOMException, IOException, BESError {
 
@@ -1310,6 +1429,104 @@ public class BesApi {
 
             } else {
                 log.info(logPrefix + "Using cached copy of BES showCatalog.  dataSource=\"" +
+                        dataSource + "\"");
+
+                if (o instanceof BESError) {
+                    log.info(logPrefix + "Cache contains BESError object.  dataSource=\"" +
+                            dataSource + "\"");
+                    BESError error = (BESError) o;
+                    throw error;
+                }
+                else if(o instanceof Document){
+                    Document cachedCatalogDoc = (Document)o;
+                    Element root = cachedCatalogDoc.getRootElement();
+                    Element newRoot =  (Element) root.clone();
+                    newRoot.detach();
+                    response.setRootElement(newRoot);
+                }
+                else {
+                    throw new IOException("Cached object is of unexpected type! This is a bad thing! Object: "+o.getClass().getCanonicalName());
+                }
+            }
+        }
+        finally {
+            Timer.stop(timedProc);
+
+        }
+
+    }
+
+
+
+    /**
+     * Returns the BES catalog document for the specified dataSource.
+     *
+     * @param dataSource The data source whose information is to be retrieved
+     * @param response The document where the response (be it a catalog
+     * document or an error) will be placed.
+     * @return True if successful, false if the BES generated an error in
+     * while servicing the request.
+     * @throws PPTException              .
+     * @throws BadConfigurationException .
+     * @throws IOException               .
+     * @throws JDOMException             .
+     */
+    public void getBesNode(String dataSource, Document response)
+            throws BadConfigurationException, PPTException, JDOMException, IOException, BESError {
+
+        String logPrefix = "getBesNode() - ";
+
+        Procedure timedProc = Timer.start();
+        try {
+
+            //String responseCacheKey = this.getClass().getName() + ".getBesCatalog(\"" + dataSource + "\")";
+
+            log.info(logPrefix + "Looking for cached copy of BES showNode response for dataSource \"" +
+                    dataSource + "\"");
+
+            Object o = BesCatalogCache.getCatalog(dataSource);
+            //Object o = RequestCache.get(responseCacheKey);
+
+            if (o == null) {
+                log.info(logPrefix + "No cached copy of BES showNode response for dataSource \"" +
+                        dataSource + "\" found. Acquiring now.");
+
+                if(!dataSource.startsWith("/"))
+                    dataSource = "/" + dataSource;
+
+                Document showNodeRequestDoc = getShowNodeRequestDocument(dataSource);
+
+                try {
+                    besTransaction(dataSource, showNodeRequestDoc, response);
+                    // Get the root element.
+                    Element root = response.getRootElement();
+                    if(root==null)
+                        throw new IOException("BES showNode response for "+dataSource+" was empty! No root element");
+
+                    Element showNode  = root.getChild("showNode", BES_NS);
+                    if(showNode==null)
+                        throw new IOException("BES showNode response for "+dataSource+" was malformed! No showNode element");
+
+                    showNode.setAttribute("prefix", getBESprefix(dataSource));
+
+                    BesCatalogCache.putCatalogTransaction(dataSource, showNodeRequestDoc, response.clone());
+                    // RequestCache.put(responseCacheKey, response.clone());
+                    log.info(logPrefix + "Cached copy of BES showNode response for dataSource: \"" +
+                            dataSource + "\"");
+
+                }
+                catch (BESError be){
+                    log.info(logPrefix + "The BES returned a BESError for dataSource: \"" + dataSource +
+                            "\"  CACHING. (responseCacheKey=\"" + dataSource + "\")");
+                    BesCatalogCache.putCatalogTransaction(dataSource, showNodeRequestDoc, be);
+                    // RequestCache.put(dataSource, be);
+                    throw be;
+                }
+
+
+
+            } else {
+                log.info(logPrefix + "Using cached copy of BES showNode.  dataSource=\"" +
                         dataSource + "\"");
 
                 if (o instanceof BESError) {
@@ -1974,6 +2191,26 @@ public class BesApi {
 
     }
     /**
+     *  Returns the XML data response for the passed dataSource
+     *  using the passed constraint expression.
+     * @param dataSource The data set whose DDS is being requested
+     * @param ce The constraint expression to apply.
+     * @param xdap_accept The version of the DAP to use in building the response.
+     * @param maxResponseSize Maximum allowable response size.
+     * @return The DDS request document.
+     * @throws BadConfigurationException When no BES can be found to
+     * service the request.
+     */
+    public Document getDap2DataAsCovJsonRequest(String dataSource,
+                                             String ce,
+                                             String xdap_accept,
+                                             int maxResponseSize)
+            throws BadConfigurationException {
+
+        return getDap2RequestDocument(DAP2_DATA, dataSource, ce, xdap_accept, maxResponseSize, null, null, COVJSON, XML_ERRORS);
+
+    }
+    /**
      *  Returns the JSON encoded DAP2 Metadata response (DDX) for the passed dataSource
      *  using the passed constraint expression.
      * @param dataSource The data set whose DDS is being requested
@@ -2096,6 +2333,27 @@ public class BesApi {
 
     }
 
+    /**
+     *  Returns the XML data response for the passed dataSource
+     *  using the passed constraint expression.
+     * @param dataSource The data set whose DDS is being requested
+     * @param qp The DAP4 query string parameters associated wih the request.
+     * @param maxResponseSize Maximum allowable response size.
+     * @return The DDS request document.
+     * @throws BadConfigurationException When no BES can be found to
+     * service the request.
+     */
+    public Document getDap4DataAsCovJsonRequest(String dataSource,
+                                             QueryParameters qp,
+                                             int maxResponseSize
+    )
+            throws BadConfigurationException {
+
+        return getDap4RequestDocument(DAP4_DATA, dataSource, qp, maxResponseSize, null, null, COVJSON, XML_ERRORS);
+
+
+    }
+
 
 
     /**
@@ -2138,7 +2396,7 @@ public class BesApi {
             throws BadConfigurationException {
 
         return getDap4RequestDocument(DAP4_DMR, dataSource, qp, maxResponseSize, null, null, JSON, XML_ERRORS);
-        
+
 
     }
 
@@ -2235,12 +2493,12 @@ public class BesApi {
 
 
 
-        return getDap2RequestDocument(type, dataSource,ce, null, null, xdap_accept, maxResponseSize, xmlBase, formURL, returnAs, errorContext);
+        return getDap2RequestDocumentAsync(type, dataSource,ce, null, null, xdap_accept, maxResponseSize, xmlBase, formURL, returnAs, errorContext);
 
     }
 
 
-    public  Document getDap2RequestDocument(String type,
+    public  Document getDap2RequestDocumentAsync(String type,
                                             String dataSource,
                                             String ce,
                                             String async,
@@ -2307,7 +2565,7 @@ public class BesApi {
      *
      * @return The name os the BES "space" (aka catalog) which will be used to service the request.
      */
-    protected String getBesSpaceName(){ return DEFAULT_BES_SPACE; }
+    protected String getBesSpaceName(){ return DEFAULT_BES_CATALOG_NAME; }
 
     /**
      * This defines the name of the container built by the BES. It's name matters not, it's really an ID, but to keep
@@ -2339,6 +2597,14 @@ public class BesApi {
 
         request.setAttribute(REQUEST_ID,getRequestIdBase());
 
+        /**----------------------------------------------------------------------
+         * Added this bit for the cloudy dap experiment - ndp 1/19/17
+         */
+        String cloudyDap = qp.getCloudyDap();
+        if(cloudyDap!=null){
+            request.addContent(setContextElement(CLOUDY_DAP_CONTEXT,cloudyDap));
+        }
+        /**----------------------------------------------------------------------*/
 
         request.addContent(setContextElement(EXPLICIT_CONTAINERS_CONTEXT,"no"));
 
@@ -2375,8 +2641,52 @@ public class BesApi {
     }
 
 
+    public  Document getSiteMapRequestDocument(String sitePrefix) {
+
+        Element request = new Element("request", BES_NS);
+        request.setAttribute(REQUEST_ID,getRequestIdBase());
+
+        request.addContent(setContextElement(EXPLICIT_CONTAINERS_CONTEXT,"no"));
+        request.addContent(setContextElement(ERRORS_CONTEXT,XML_ERRORS));
+
+
+        request.addContent(getSiteMapRequestElement(sitePrefix,"contents.html", ".html"));
+
+        XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
+        log.debug("getSiteMapRequestDocument() - Document\n {}",xmlo.outputString(request));
+
+        return new Document(request);
+
+    }
+
+
+    /**
+     *     <buildSiteMap prefix="http://machine/opendap" nodeSuffix="contents.html" leafSuffix="" filename="node_site_map.txt"/>
+     *
+     * @param prefix
+     * @return
+     */
+
+    public Element getSiteMapRequestElement(String prefix, String nodeSuffix, String leafSuffix ) {
+        Element e;
+        Element spi = new Element("buildSiteMap",BES_NS);
+
+        if(prefix!=null)
+            spi.setAttribute("prefix", prefix);
+
+        if(nodeSuffix!=null)
+            spi.setAttribute("nodeSuffix", nodeSuffix);
+
+        if(leafSuffix!=null)
+            spi.setAttribute("leafSuffix", leafSuffix);
+
+        return spi;
+    }
+
+
+
     public  Document getShowPathInfoRequestDocument(String dataSource)
-                throws BadConfigurationException {
+            throws BadConfigurationException {
 
 
         String besDataSource = getBES(dataSource).trimPrefix(dataSource);
@@ -2418,10 +2728,17 @@ public class BesApi {
     }
 
 
+    @Deprecated
     public Document getShowCatalogRequestDocument(String dataSource)
             throws BadConfigurationException {
         return getShowRequestDocument("showCatalog", dataSource);
 
+    }
+
+
+    public Document getShowNodeRequestDocument(String dataSource)
+            throws BadConfigurationException {
+        return getShowRequestDocument("showNode", dataSource);
     }
 
 
@@ -2452,11 +2769,6 @@ public class BesApi {
         return new Document(request);
 
     }
-
-
-
-
-
 
     public BES getBES(String dataSource) throws BadConfigurationException {
         BES bes = BESManager.getBES(dataSource);
@@ -2511,7 +2823,7 @@ public class BesApi {
      */
     public String getBesDataSourceID(String relativeUrl, boolean checkWithBes){
 
-        Pattern lastDotSuffixPattern= Pattern.compile(_regexToMatchLastDotSuffixString);
+        Pattern lastDotSuffixPattern= Pattern.compile(MATCH_LAST_DOT_SUFFIX_REGEX_STRING);
 
         return getBesDataSourceID(relativeUrl,lastDotSuffixPattern,checkWithBes);
 
@@ -2608,14 +2920,61 @@ public class BesApi {
 
 
     public String getBesCombinedTypeMatch() throws JDOMException, BadConfigurationException, PPTException, IOException, BESError {
-        return getBesCombinedTypeMatchPattern("/");
+        return getDefaultBesCombinedTypeMatchPattern("/");
     }
 
-    public String getBesCombinedTypeMatchPattern(String besPrefix) throws JDOMException, BadConfigurationException, PPTException, BESError, IOException {
+
+    /**
+     * Retrives a BES Key that holds a Map stored in the values of the key and formatted as key:value
+     * @param besPath
+     * @param mapName
+     * @return
+     * @throws BadConfigurationException
+     * @throws JDOMException
+     * @throws IOException
+     * @throws PPTException
+     * @throws BESError
+     */
+    public HashMap<String,String> getBESConfigParameterMap(String besPath, String mapName)
+            throws BadConfigurationException, JDOMException, IOException, PPTException, BESError {
+
+        HashMap<String,String> pmap = new HashMap<>();
+
+        BES bes = getBES(besPath);
+        Element admin = showBesKey(bes.getPrefix(), mapName);
+        XMLOutputter xmlo = new XMLOutputter(Format.getPrettyFormat());
+        xmlo.output(admin, System.out);
+
+        @SuppressWarnings("unchecked")
+        List<Element> values = admin.getChildren("value", opendap.namespaces.BES.BES_NS);
+        for(Element v: values){
+            String s = v.getTextTrim();
+            log.debug("getBESConfigParameterMap() - Processing map string: {}",s);
+            int markIndex = s.indexOf(":");
+            if(markIndex < 0){
+                log.error("getBESConfigParameterMap() The BES returned an incorrectly formatted value for the {} key. value: '{}' SKIPPING",mapName,v);
+            }
+            else {
+                String key = s.substring(0,markIndex ).toLowerCase();
+                String value = s.substring(markIndex + 1);
+                pmap.put(key, value);
+            }
+        }
+        return pmap;
+    }
+
+
+
+
+
+    public String getDefaultBesCombinedTypeMatchPattern(String besPrefix) throws JDOMException, BadConfigurationException, PPTException, BESError, IOException {
 
         StringBuilder combinedTypeMatch = new StringBuilder();
-        Element typeMatchKey = showBesKey(besPrefix,"BES.Catalog.catalog.TypeMatch");
-
+        Element typeMatchKey = showBesKey(besPrefix, DEFAULT_BES_CATALOG_TYPE_MATCH_KEY);
+        if(typeMatchKey == null){
+            throw new BadConfigurationException("Failed to get BES Key '"+ DEFAULT_BES_CATALOG_TYPE_MATCH_KEY +"'");
+        }
+        @SuppressWarnings("unchecked")
         List<Element> values = (List<Element>)typeMatchKey.getChildren("value",BES_NS);
 
         for(Element value: values){
